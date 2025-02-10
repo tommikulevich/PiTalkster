@@ -10,7 +10,16 @@
 
 ### 🦐 Customer requirements
 
-*Comming soon...*
+The system: 
+- must be very simple to use,
+- should allow user to speak prompts using the microphone,
+- must run local AI model to process provided prompt (without requiring an internet connection),
+- should display results on the LCD screen,
+- must provide basic user controls,
+- should include a menu for additional functions such as configuration and history viewing,
+- could be designed for desktop use (does not need to be portable).
+
+> _Customer does not impose a specific AI model, menu view, configuration/history options etc._
 
 ### 💾 Technical requirements
 

@@ -23,7 +23,13 @@ The system:
 
 ### 💾 Technical requirements
 
-*Comming soon...*
+- Platform: Raspberry Pi 4B+
+- Power: 5V/3A, low power consumption is not a priority
+- Display: LCD IPS 1.3" 240×240 with ST7789 controller
+- Audio input: SPH0645LM4H-B microphone MEMS I2S
+- Controls: min. 3 physical buttons (2 for navigation, 1 for applying)
+- LLM model: deepseek-r1:1.5b
+- Enclosure: optional for demo
 
 ### ☑️ Acceptance criteria
 

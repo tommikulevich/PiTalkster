@@ -33,7 +33,12 @@ The system:
 
 ### ☑️ Acceptance criteria
 
-*Comming soon...*
+- The system on power-up must automatically display the main menu on the LCD screen.
+- The built-in microphone must accurately capture and record voice prompts with sufficient clarity for proper evaluation.
+- The LCD must clearly display interface elements, including menu and AI responses.
+- All physical buttons must be responsive and trigger their designated functions reliably.
+- The system must process prompts using local model entirely offline.
+- The menu must allow user to navigate, configure settings and view history without the need for login via SSH/UART or accessing the SD card.
 
 ---
 

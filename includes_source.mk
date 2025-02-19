@@ -1,6 +1,13 @@
-LDFLAGS_EXTRA = -pthread -lpigpiod_if2
+LDFLAGS_EXTRA = -pthread -lpigpiod_if2 -lgpiod
+
 CFLAGS_EXTRA = \
 	-Isrc/utils \
 	-Isrc/event_broker \
 	-Isrc/core \
 	-Isrc/controls \
+	-Isrc/display
+
+EXT_LIB_CFLAGS_EXTRA = \
+	-Ilib/st7789 \
+	-Ilib/st7789/interface \
+	-Ilib/st7789/interface/inc

@@ -4,6 +4,7 @@
 #include "utils.h"
 
 #include "controls.h"
+#include "display.h"
 #include "event_broker.h"
 #include "core.h"
 
@@ -11,6 +12,7 @@
 int main( int argc UNUSED_PARAM, char *argv[] UNUSED_PARAM ) {
     // HW
     ASSERT( controls_init() == RES_OK );
+    ASSERT( display_init() == RES_OK );
 
     // SW
     ASSERT( broker_init() == RES_OK );

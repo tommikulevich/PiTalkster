@@ -10,7 +10,7 @@
 #define EVENT_DATA_SIZE 4096
 
 typedef enum {
-    COMPONENT_CORE,
+    COMPONENT_CORE_DISP,
     COMPONENT_CONTROLS,
     COMPONENT_AUDIO_INPUT,
     COMPONENT_STT,
@@ -19,7 +19,7 @@ typedef enum {
 
 static inline const char* sys_component_enum_to_string( sys_component_t sys_component ) {
     switch( sys_component ) {
-        case COMPONENT_CORE:        return "COMPONENT_CORE";
+        case COMPONENT_CORE_DISP:   return "COMPONENT_CORE_DISP";
         case COMPONENT_CONTROLS:    return "COMPONENT_CONTROLS";
         case COMPONENT_AUDIO_INPUT: return "COMPONENT_AUDIO_INPUT";
         case COMPONENT_STT:         return "COMPONENT_STT";

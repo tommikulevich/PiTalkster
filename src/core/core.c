@@ -12,7 +12,7 @@
 void * core_thread( void * arg UNUSED_PARAM ) {
     while(1) {
         event_t e = STRUCT_INIT_ALL_ZEROS;
-        if( broker_pop(COMPONENT_CORE, &e) == RES_OK ) {
+        if( broker_pop(COMPONENT_CORE_DISP, &e) == RES_OK ) {
             switch( e.event_type ) {
                 case EVENT_BUT_PRESSED: {
                     INFO("I have it, GPIO!");

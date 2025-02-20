@@ -1,4 +1,4 @@
-LDFLAGS_EXTRA = -pthread -lpigpiod_if2 -lgpiod
+LDFLAGS_EXTRA = -pthread -lgpiod
 
 CFLAGS_EXTRA = \
 	-Isrc/utils \

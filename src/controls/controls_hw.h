@@ -9,6 +9,8 @@ typedef enum {
     BUTTON_DOWN_GPIO    = 6
 } button_gpio_t;
 
+typedef void (*button_handler_t)(button_gpio_t gpio);
+
 static inline const char* button_gpio_enum_to_string( button_gpio_t button_gpio ) {
     switch( button_gpio ) {
         case BUTTON_UP_GPIO:    return "BUTTON_UP";
@@ -19,10 +21,6 @@ static inline const char* button_gpio_enum_to_string( button_gpio_t button_gpio 
     }
 }
 
-typedef struct {
-    void (*action_on_press_button)(button_gpio_t);
-} action_wrapper_t;
-
-extern result_t controls_hw_init( const action_wrapper_t * action_wrapper );
+extern result_t controls_hw_init_button(button_gpio_t gpio, button_handler_t handler);
 
 #endif

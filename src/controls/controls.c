@@ -5,7 +5,7 @@
 #include "controls_hw.h"
 #include "event_broker.h"
 
-void button_event_publish( button_gpio_t button_gpio ) {
+static void button_event_publish( button_gpio_t button_gpio ) {
     event_t event = STRUCT_INIT_ALL_ZEROS;
     result_t create_res = event_create(
         COMPONENT_CONTROLS, COMPONENT_CORE_DISP,
@@ -24,11 +24,16 @@ void button_event_publish( button_gpio_t button_gpio ) {
     INFO("%s pressed! Publish event %s", 
         button_gpio_enum_to_string(button_gpio),
         event_type_enum_to_string(EVENT_BUT_PRESSED));
-    broker_publish(&event);
+
+    if( broker_publish(&event) != RES_OK ) {
+        ERROR("Error ocured when publish event!");
+    }
 }
 
-const action_wrapper_t action_wrapper = { button_event_publish };
-
 result_t controls_init(void) {
-    return controls_hw_init(&action_wrapper);
+    RETURN_ON_ERROR( controls_hw_init_button(BUTTON_UP_GPIO, button_event_publish) );
+    RETURN_ON_ERROR( controls_hw_init_button(BUTTON_OK_GPIO, button_event_publish) );
+    RETURN_ON_ERROR( controls_hw_init_button(BUTTON_DOWN_GPIO, button_event_publish) );
+    
+    return RES_OK;
 }

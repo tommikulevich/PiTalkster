@@ -1,79 +1,99 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <pigpiod_if2.h>
+#include <pthread.h>
+#include <unistd.h>
+#include <sys/select.h>
+#include <gpiod.h>
 
 #include "controls_hw.h"
 
-static int pi = -1;
-static uint32_t last_tick = 0;
+#define DEBOUNCE_TIME_US    2000
+#define GPIO_CHIP_PATH      "/dev/gpiochip0"
 
-#define DEBOUNCE_TIME_US 2000
+struct button_info_t {
+    button_gpio_t gpio;
+    button_handler_t handler;
+    struct gpiod_line * line;
+    pthread_t thread_id;
 
-static void button_callback( int pi_inst UNUSED_PARAM, unsigned gpio, unsigned level, 
-        uint32_t tick, void * user_data ) {
+    uint64_t last_event_time;
+    struct button_info_t * next;
+};
 
-    const action_wrapper_t * action_wrapper = (const action_wrapper_t *)user_data;
+static struct gpiod_chip * chip;
+static struct button_info_t * buttons_list = NULL;
 
-    if( (tick - last_tick) < DEBOUNCE_TIME_US )
-        return;
+static void * button_event_thread( void * arg ) {
+    struct button_info_t * info = (struct button_info_t *)arg;
+    struct gpiod_line_event event;
+    uint64_t current_time;
 
-    last_tick = tick;
-
-    switch( gpio ) {
-        case BUTTON_OK_GPIO: {
-            if( level == PI_HIGH ) {
-                if( action_wrapper != NULL ) {
-                    action_wrapper->action_on_press_button(BUTTON_OK_GPIO);
+    while(1) {
+        int ret = gpiod_line_event_wait(info->line, NULL);
+        if( ret == 1 ) {
+            ret = gpiod_line_event_read(info->line, &event);
+            if( ret == 0 ) {
+                current_time = get_current_time_us();
+                if( current_time - info->last_event_time >= DEBOUNCE_TIME_US ) {
+                    info->last_event_time = current_time;
+                    if( event.event_type == GPIOD_LINE_EVENT_RISING_EDGE ) {
+                        info->handler(info->gpio);
+                    }
                 }
             }
-            break;
         }
-
-        case BUTTON_UP_GPIO: {
-            if( level == PI_HIGH ) {
-                if( action_wrapper != NULL ) {
-                    action_wrapper->action_on_press_button(BUTTON_UP_GPIO);
-                }
-            }
-            break;
-        }
-
-        case BUTTON_DOWN_GPIO: {
-            if( level == PI_HIGH ) {
-                if( action_wrapper != NULL ) {
-                    action_wrapper->action_on_press_button(BUTTON_DOWN_GPIO);
-                }
-            }
-            break;
-        }
-
-        default:
-            break;
     }
+    
+    return NULL;
 }
 
-static result_t gpio_single_init( button_gpio_t button_gpio, 
-        const action_wrapper_t * action_wrapper ) {    
-    set_mode(pi, button_gpio, PI_INPUT);
-    set_pull_up_down(pi, button_gpio, PI_PUD_UP);
-
-    int cb = callback_ex(pi, button_gpio, EITHER_EDGE, button_callback, 
-        (void *)action_wrapper);
-    if( cb < 0 ) {
-         pigpio_stop(pi);
-         return RES_ERR_GENERIC;
+result_t controls_hw_init_button( button_gpio_t gpio, button_handler_t handler ) {
+    if( !chip ) {
+        chip = gpiod_chip_open(GPIO_CHIP_PATH);
+        if( !chip ) {
+            return RES_ERR_NOT_READY;
+        }
     }
 
-    return RES_OK;
-}
+    struct button_info_t * info = malloc(sizeof(struct button_info_t));
+    if( !info ) {
+        return RES_ERR_NOT_READY;
+    }
 
-result_t controls_hw_init( const action_wrapper_t * action_wrapper ) {
-    pi = pigpio_start(NULL, NULL);
-    if( pi < 0 ) return RES_ERR_GENERIC;
+    info->gpio = gpio;
+    info->handler = handler;
+    info->last_event_time = 0;
 
-    RETURN_ON_ERROR( gpio_single_init(BUTTON_UP_GPIO, action_wrapper) );
-    RETURN_ON_ERROR( gpio_single_init(BUTTON_OK_GPIO, action_wrapper) );
-    RETURN_ON_ERROR( gpio_single_init(BUTTON_DOWN_GPIO, action_wrapper) );
+    info->line = gpiod_chip_get_line(chip, (unsigned int)gpio);
+    if( !info->line ) {
+        free(info);
+        return RES_ERR_GENERIC;
+    }
+
+    char label[32];
+    snprintf(label, sizeof(label), "button_%d", gpio);
+
+    struct gpiod_line_request_config config = {
+        .consumer = label,
+        .request_type = GPIOD_LINE_REQUEST_EVENT_RISING_EDGE,
+        .flags = GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_UP
+    };
+
+    if( gpiod_line_request(info->line, &config, 0) < 0 ) {
+        free(info);
+        return RES_ERR_GENERIC;
+    }
+
+    if( pthread_create(&info->thread_id, NULL, button_event_thread, info) != 0 ) {
+        gpiod_line_release(info->line);
+        free(info);
+        return RES_ERR_GENERIC;
+    }
+
+    info->next = buttons_list;
+    buttons_list = info;
 
     return RES_OK;
 }

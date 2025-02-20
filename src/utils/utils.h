@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <sys/time.h>
 
 // ===========
 // = General =
@@ -17,7 +19,8 @@ typedef enum {
     RES_OK,
     RES_ERR_GENERIC,
     RES_ERR_NOT_READY,
-    RES_ERR_INVALID_SIZE
+    RES_ERR_INVALID_SIZE,
+    RES_ERR_WRONG_ARGS,
 } result_t;
 
 #define RETURN_ON_ERROR(result) \
@@ -83,5 +86,15 @@ typedef enum {
     } while (0)
 
 #define ASSERT_NOT_NULL(ptr)  ASSERT((ptr) != NULL)
+
+// ========
+// = Time =
+// ========
+
+static inline uint64_t get_current_time_us( void ) {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return ((uint64_t)tv.tv_sec) * 1000000ULL + (uint64_t)tv.tv_usec;
+}
 
 #endif

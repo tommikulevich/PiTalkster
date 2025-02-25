@@ -49,14 +49,22 @@ typedef enum {
 #define LOG_STREAM stdout
 #endif
 
+#define RST     "\033[0m"
+#define RED     "\033[31m"
+#define YELLOW  "\033[33m"
+#define BLUE    "\033[34m"
+#define GREEN   "\033[32m"
+#define CYAN    "\033[36m"
+#define MAGENTA "\033[35m"
+
 #define LOG(level, ...) \
     do { \
         if (level <= CURRENT_LOG_LEVEL) { \
             const char *level_str; \
             switch (level) { \
-                case LOG_LEVEL_ERROR: level_str = "[ERROR]"; break; \
-                case LOG_LEVEL_WARN:  level_str = "[WARN]";  break; \
-                case LOG_LEVEL_INFO:  level_str = "[INFO]";  break; \
+                case LOG_LEVEL_ERROR: level_str = RED"[ERROR]"RST; break; \
+                case LOG_LEVEL_WARN:  level_str = YELLOW"[WARN]"RST;  break; \
+                case LOG_LEVEL_INFO:  level_str = BLUE"[INFO]"RST;  break; \
                 case LOG_LEVEL_DEBUG: level_str = "[DEBUG]"; break; \
                 default: level_str = ""; break; \
             } \

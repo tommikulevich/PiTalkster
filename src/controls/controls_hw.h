@@ -3,11 +3,7 @@
 
 #include "utils.h"
 
-typedef enum {
-    BUTTON_UP_GPIO      = 22,
-    BUTTON_OK_GPIO      = 5,
-    BUTTON_DOWN_GPIO    = 6
-} button_gpio_t;
+#include "controls_gpio.h"
 
 typedef void (*button_handler_t)(button_gpio_t gpio);
 

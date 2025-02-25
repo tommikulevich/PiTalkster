@@ -1,6 +1,3 @@
-#include <stdint.h>
-#include <string.h>
-
 #include "utils.h"
 
 #include "driver_st7789_basic.h"

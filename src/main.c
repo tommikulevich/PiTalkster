@@ -4,6 +4,7 @@
 #include "utils.h"
 
 #include "controls.h"
+#include "audio_input.h"
 #include "display.h"
 #include "event_broker.h"
 #include "core.h"
@@ -13,10 +14,15 @@ int main( int argc UNUSED_PARAM, char *argv[] UNUSED_PARAM ) {
     // HW
     ASSERT( controls_init() == RES_OK );
     ASSERT( display_init() == RES_OK );
+    ASSERT( audio_input_init() == RES_OK );
 
     // SW
     ASSERT( broker_init() == RES_OK );
     ASSERT( core_init() == RES_OK );
+
+    // Audio input thread
+    pthread_t thr_audio;
+    pthread_create(&thr_audio, NULL, audio_input_thread, NULL);
 
     // Main core thread
     pthread_t thr_core;

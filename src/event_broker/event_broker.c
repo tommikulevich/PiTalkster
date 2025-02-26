@@ -37,9 +37,9 @@ result_t broker_pop( sys_component_t c, event_t * e OUTPUT ) {
     }
 
     INFO(MAGENTA"[⇩] POP EVENT \'%s\' FROM [%s] BY [%s]. DATA SIZE: %ld"RST, 
-        sys_component_enum_to_string(c),
         event_type_enum_to_string(e->type),
         sys_component_enum_to_string(e->src),
+        sys_component_enum_to_string(c),
         e->data_size);
 
     return res;

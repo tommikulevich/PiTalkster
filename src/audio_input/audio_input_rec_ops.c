@@ -164,9 +164,9 @@ result_t record_audio( const char * filepath OUTPUT, int duration_s,
 
     audio_settings_t settings = {
         .device_name = "plughw:1",
-        .rate = 48000,
-        .channels = 2,
-        .format = SND_PCM_FORMAT_S32_LE,
+        .rate = 16000,
+        .channels = 1,
+        .format = SND_PCM_FORMAT_S16_LE,
         .period_size = 6000,
         .buffer_size = 24000,
         .bits_per_sample = 32

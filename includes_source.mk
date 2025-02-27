@@ -1,12 +1,12 @@
-LDFLAGS_EXTRA = -pthread -lgpiod -lasound
-
+LDFLAGS_EXTRA = -pthread -lgpiod -lasound -lvosk -lcjson
 CFLAGS_EXTRA = \
 	-Isrc/utils \
 	-Isrc/event_broker \
 	-Isrc/core \
 	-Isrc/controls \
 	-Isrc/display \
-	-Isrc/audio_input
+	-Isrc/audio_input \
+	-Isrc/speech_to_text
 
 EXT_LIB_CFLAGS_EXTRA = \
 	-Ilib/st7789 \

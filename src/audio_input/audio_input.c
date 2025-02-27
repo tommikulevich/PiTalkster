@@ -65,6 +65,38 @@ void * audio_input_thread( void * arg UNUSED_PARAM ) {
     };
 
     while(1) {
+        if( context.status == REC_STATUS_FINISHED_OK
+                || context.status == REC_STATUS_FINISHED_ERROR ) {
+            INFO("Recording finished.");
+            
+            event_t event = STRUCT_INIT_ALL_ZEROS;
+            if( context.status == REC_STATUS_FINISHED_OK ) {                        
+                result_t res = event_create(
+                    COMPONENT_AUDIO_INPUT, COMPONENT_STT,
+                    EVENT_STT_REQUEST, 
+                    context.filepath, sizeof(context.filepath),
+                    &event);
+
+                if( res == RES_OK ) {
+                    broker_publish(&event);
+                }
+            } else {
+                result_t res = event_create(
+                    COMPONENT_AUDIO_INPUT, COMPONENT_CORE_DISP,
+                    EVENT_REC_ERROR, 
+                    NULL, 0,
+                    &event);
+
+                if( res == RES_OK ) {
+                    broker_publish(&event);
+                }
+            }
+
+            memset(context.filepath, 0, sizeof(context.filepath));
+            rec_stop_flag = 0;
+            context.status = REC_STATUS_NOT_STARTED;
+        }
+
         event_t e = STRUCT_INIT_ALL_ZEROS;
         if( broker_pop(COMPONENT_AUDIO_INPUT, &e) == RES_OK ) {
             switch( e.type ) {
@@ -94,33 +126,6 @@ void * audio_input_thread( void * arg UNUSED_PARAM ) {
 
                     rec_stop_flag = 1;
                     pthread_join(rec_thread, NULL);
-
-                    event_t event = STRUCT_INIT_ALL_ZEROS;
-                    if( context.status == REC_STATUS_FINISHED_OK ) {                        
-                        result_t res = event_create(
-                            COMPONENT_AUDIO_INPUT, COMPONENT_STT,
-                            EVENT_STT_REQUEST, 
-                            context.filepath, sizeof(context.filepath),
-                            &event);
-
-                        if( res == RES_OK ) {
-                            broker_publish(&event);
-                        }
-                    } else {
-                        result_t res = event_create(
-                            COMPONENT_AUDIO_INPUT, COMPONENT_CORE_DISP,
-                            EVENT_REC_ERROR, 
-                            NULL, 0,
-                            &event);
-
-                        if( res == RES_OK ) {
-                            broker_publish(&event);
-                        }
-                    }
-
-                    memset(context.filepath, 0, sizeof(context.filepath));
-                    rec_stop_flag = 0;
-                    context.status = REC_STATUS_NOT_STARTED;
                     
                     break;
                 }

@@ -239,3 +239,7 @@ cython_debug/
 
 _Arch/
 .vscode/
+data/
+*.wav
+models/
+*.txt

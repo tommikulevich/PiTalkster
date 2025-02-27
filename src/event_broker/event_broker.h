@@ -3,7 +3,7 @@
 
 #include "utils.h"
 
-#include "event_queue.h"
+#include "event.h"
 
 extern result_t broker_init( void);
 extern result_t broker_publish( event_t * e );

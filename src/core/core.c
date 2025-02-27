@@ -7,15 +7,61 @@
 
 #include "core.h"
 #include "event_broker.h"
+#include "controls.h"
+#include "controls_gpio.h"
 
 
 void * core_thread( void * arg UNUSED_PARAM ) {
     while(1) {
         event_t e = STRUCT_INIT_ALL_ZEROS;
         if( broker_pop(COMPONENT_CORE_DISP, &e) == RES_OK ) {
-            switch( e.event_type ) {
+            switch( e.type ) {
                 case EVENT_BUT_PRESSED: {
-                    INFO("I have it, GPIO!");
+                    button_gpio_t gpio;
+                    if( e.data_size != sizeof(gpio) ) {
+                        ERROR("Failed GPIO data in event.");
+                        continue;
+                    }
+    
+                    memcpy(&gpio, e.data, e.data_size);
+
+                    switch( gpio ) {
+                        case BUTTON_UP_GPIO: {
+                            event_t event = STRUCT_INIT_ALL_ZEROS;
+                            result_t res = event_create(
+                                COMPONENT_CORE_DISP, COMPONENT_AUDIO_INPUT,
+                                EVENT_REC_REQUEST, 
+                                NULL, 0,
+                                &event);
+
+                            if( res == RES_OK ) {
+                                broker_publish(&event);
+                            }
+                            
+                            break;
+                        }
+
+                        case BUTTON_OK_GPIO: {
+                            break;
+                        }
+
+                        case BUTTON_DOWN_GPIO: {
+                            event_t event = STRUCT_INIT_ALL_ZEROS;
+                            result_t res = event_create(
+                                COMPONENT_CORE_DISP, COMPONENT_AUDIO_INPUT,
+                                EVENT_REC_CANCEL, 
+                                NULL, 0,
+                                &event);
+
+                            if( res == RES_OK ) {
+                                broker_publish(&event);
+                            }
+                        }
+
+                        default: 
+                            break;
+                    }
+
                     break;
                 }
 

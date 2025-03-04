@@ -7,7 +7,7 @@
 result_t event_create( sys_component_t src, sys_component_t dest, 
         event_type_t type, const void * data, size_t data_size,
         event_t * event OUTPUT ) {
-    ASSERT_NOT_NULL(event);
+    RETURN_IF_NULL(event);
 
     if( data_size > EVENT_MAX_DATA_SIZE ) {
         ERROR("Failed to create event %s: data size %ld > %d!",

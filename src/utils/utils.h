@@ -22,12 +22,27 @@ typedef enum {
     RES_ERR_NOT_READY,
     RES_ERR_INVALID_SIZE,
     RES_ERR_WRONG_ARGS,
+    RES_ERR_NULL_PTR
 } result_t;
 
 #define RETURN_ON_ERROR(result) \
     do { \
         if ((result) != RES_OK) { \
             return (result); \
+        } \
+    } while (0)
+
+#define RETURN_IF_NULL(ptr) \
+    do { \
+        if ((ptr) == NULL) { \
+            return RES_ERR_NULL_PTR; \
+        } \
+    } while (0)
+
+#define RETURN_ERROR_IF(condition, error) \
+    do { \
+        if ((condition)) { \
+            return (error); \
         } \
     } while (0)
 
@@ -87,12 +102,15 @@ typedef enum {
 // = Asserts =
 // ===========
 
+#define SLEEP_TIME_ASSERT_FAILED_S  5
+
 #define STATIC_ASSERT(cond, msg) _Static_assert(cond, msg)
 
 #define ASSERT(condition)                        \
     do {                                    \
         if (!(condition)) {                      \
             ERROR("Assertion failed: %s\n", #condition); \
+            sleep(SLEEP_TIME_ASSERT_FAILED_S); \
             exit(EXIT_FAILURE);             \
         }                                   \
     } while (0)

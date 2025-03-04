@@ -22,9 +22,9 @@ typedef struct {
 
 static result_t setup_pcm_capture( snd_pcm_t ** handle, 
         snd_pcm_hw_params_t ** params, audio_settings_t * settings ) {
-    ASSERT_NOT_NULL(handle);
-    ASSERT_NOT_NULL(params);
-    ASSERT_NOT_NULL(settings);
+    RETURN_IF_NULL(handle);
+    RETURN_IF_NULL(params);
+    RETURN_IF_NULL(settings);
 
     int rc;
     snd_pcm_t * capture_handle = NULL;
@@ -108,59 +108,68 @@ static result_t setup_pcm_capture( snd_pcm_t ** handle,
     return RES_OK;
 }
 
-static void write_little_endian_16( FILE * fp, uint16_t value ) {
-    ASSERT_NOT_NULL(fp);
+static result_t write_little_endian_16( FILE * fp, uint16_t value ) {
+    RETURN_IF_NULL(fp);
 
     uint8_t data[2];
-    for (int i = 0; i < 2; i++) {
+    for( int i = 0; i < 2; i++ ) {
         data[i] = (uint8_t)(value & 0xFF);
         value >>= 8;
     }
-    fwrite(data, 1, 2, fp);
+
+    RETURN_ERROR_IF( fwrite(data, 1, 2, fp) != 2, 
+        RES_ERR_GENERIC );
+
+    return RES_OK;
 }
 
-static void write_little_endian_32( FILE * fp, uint32_t value ) {
-    ASSERT_NOT_NULL(fp);
+static result_t write_little_endian_32( FILE * fp, uint32_t value ) {
+    RETURN_IF_NULL(fp);
 
     uint8_t data[4];
-    for (int i = 0; i < 4; i++) {
+    for( int i = 0; i < 4; i++ ) {
         data[i] = (uint8_t)(value & 0xFF);
         value >>= 8;
     }
-    fwrite(data, 1, 4, fp);
+    
+    RETURN_ERROR_IF( fwrite(data, 1, 4, fp) != 4, 
+        RES_ERR_GENERIC );
+
+    return RES_OK;
 }
 
-static void write_wav_header( FILE * fp, uint32_t data_chunk_size, 
+static result_t write_wav_header( FILE * fp, uint32_t data_chunk_size, 
         const audio_settings_t * settings ) {
-    ASSERT_NOT_NULL(fp);
-    ASSERT_NOT_NULL(settings);
+    RETURN_IF_NULL(fp);
+    RETURN_IF_NULL(settings);
 
     uint32_t riff_chunk_size = data_chunk_size + (WAV_HEADER_SIZE_BYTES - 8);
 
     rewind(fp);
-    fwrite("RIFF", 1, 4, fp);
-    write_little_endian_32(fp, riff_chunk_size);
-    fwrite("WAVE", 1, 4, fp);
-    fwrite("fmt ", 1, 4, fp);
-    write_little_endian_32(fp, 16);
-    write_little_endian_16(fp, 1);
-    write_little_endian_16(fp, (uint16_t)settings->channels); 
-    write_little_endian_32(fp, settings->rate);  
-    write_little_endian_32(fp, settings->rate * settings->channels 
-        * settings->bits_per_sample / 8);  
-    write_little_endian_16(fp, (uint16_t)(settings->channels 
-        * settings->bits_per_sample / 8)); 
-    write_little_endian_16(fp, settings->bits_per_sample);
-    fwrite("data", 1, 4, fp);
-    write_little_endian_32(fp, data_chunk_size);
+    RETURN_ERROR_IF( fwrite("RIFF", 1, 4, fp) != 4, RES_ERR_GENERIC );
+    RETURN_ON_ERROR( write_little_endian_32(fp, riff_chunk_size) );
+    RETURN_ERROR_IF( fwrite("WAVE", 1, 4, fp) != 4, RES_ERR_GENERIC );
+    RETURN_ERROR_IF( fwrite("fmt ", 1, 4, fp) != 4, RES_ERR_GENERIC );
+    RETURN_ON_ERROR( write_little_endian_32(fp, 16) );
+    RETURN_ON_ERROR( write_little_endian_16(fp, 1) );
+    RETURN_ON_ERROR( write_little_endian_16(fp, (uint16_t)settings->channels) ); 
+    RETURN_ON_ERROR( write_little_endian_32(fp, settings->rate) );  
+    RETURN_ON_ERROR( write_little_endian_32(fp, settings->rate * settings->channels 
+        * settings->bits_per_sample / 8) );  
+    RETURN_ON_ERROR( write_little_endian_16(fp, (uint16_t)(settings->channels 
+        * settings->bits_per_sample / 8)) ); 
+    RETURN_ON_ERROR( write_little_endian_16(fp, settings->bits_per_sample) );
+    RETURN_ERROR_IF( fwrite("data", 1, 4, fp) != 4, RES_ERR_GENERIC );
+    RETURN_ON_ERROR( write_little_endian_32(fp, data_chunk_size) );
+
+    return RES_OK;
 }
 
 result_t record_audio( const char * filepath OUTPUT, int duration_s, 
         volatile int * stop_flag ) {
-    ASSERT_NOT_NULL(stop_flag);
-    if( !filepath || duration_s <= 0 || !stop_flag ) {
-        return RES_ERR_WRONG_ARGS;
-    }
+    RETURN_IF_NULL(filepath);
+    RETURN_ERROR_IF( duration_s <= 0, RES_ERR_WRONG_ARGS );
+    RETURN_IF_NULL(stop_flag);
 
     audio_settings_t settings = {
         .device_name = "plughw:1",

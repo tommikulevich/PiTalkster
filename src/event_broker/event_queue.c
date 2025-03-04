@@ -4,7 +4,7 @@
 #include "event_queue.h"
 
 result_t event_queue_init( event_queue_t * q ) {
-    ASSERT_NOT_NULL(q);
+    RETURN_IF_NULL(q);
 
     q->head = 0;
     q->tail = 0;
@@ -17,8 +17,8 @@ result_t event_queue_init( event_queue_t * q ) {
 }
 
 result_t event_queue_push( event_queue_t * q, event_t * e ) {
-    ASSERT_NOT_NULL(q);
-    ASSERT_NOT_NULL(e);
+    RETURN_IF_NULL(q);
+    RETURN_IF_NULL(e);
 
     pthread_mutex_lock(&q->mu);
 
@@ -37,8 +37,8 @@ result_t event_queue_push( event_queue_t * q, event_t * e ) {
 
 result_t event_queue_pop( event_queue_t * q, sys_component_t consumer, 
         event_t * event OUTPUT ) {
-    ASSERT_NOT_NULL(q);
-    ASSERT_NOT_NULL(event);
+    RETURN_IF_NULL(q);
+    RETURN_IF_NULL(event);
 
     pthread_mutex_lock(&q->mu);
 

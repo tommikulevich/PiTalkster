@@ -74,9 +74,9 @@ static size_t ollama_write_callback( char * ptr, size_t size, size_t nmemb,
 
 result_t ollama_ask_deepseek_model( const char * answer_filepath OUTPUT,
         const char * prompt_filepath, volatile int * stop_flag) {
-    if( !answer_filepath || !prompt_filepath || !stop_flag ) {
-        return RES_ERR_WRONG_ARGS;
-    }
+    RETURN_IF_NULL(answer_filepath);
+    RETURN_IF_NULL(prompt_filepath);
+    RETURN_IF_NULL(stop_flag);
 
     char * prompt = NULL;
     long prompt_length = 0;

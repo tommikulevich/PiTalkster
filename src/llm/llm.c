@@ -29,37 +29,36 @@ typedef struct {
 
 volatile int llm_stop_flag = 0;
 
-static void create_answer_filepath_from_prompt_filepath( char * answer_filepath, 
+static result_t create_answer_filepath_from_prompt_filepath( char * answer_filepath, 
         size_t answer_filepath_size, char * prompt_filepath, size_t prompt_filepath_size ) {
-    ASSERT_NOT_NULL(answer_filepath);
-    ASSERT(answer_filepath_size != 0);
-    ASSERT_NOT_NULL(prompt_filepath);
-    ASSERT(strlen(prompt_filepath) != 0);
+    RETURN_IF_NULL(answer_filepath);
+    RETURN_ERROR_IF( answer_filepath_size == 0,
+        RES_ERR_WRONG_ARGS );
+    RETURN_IF_NULL(prompt_filepath);
+    RETURN_ERROR_IF( strlen(prompt_filepath) == 0,
+        RES_ERR_WRONG_ARGS );
 
     char temp_filepath[prompt_filepath_size];
     strncpy(temp_filepath, prompt_filepath, prompt_filepath_size);
     temp_filepath[sizeof(temp_filepath) - 1] = '\0';
 
     char * dot = strrchr(temp_filepath, '.');
-    if( dot == NULL ) {
-        ASSERT(0);
-        return;
-    }
+    RETURN_ERROR_IF( !dot, RES_ERR_GENERIC );
 
-    if( (strlen(temp_filepath) + 1) > answer_filepath_size ) {
-        ASSERT(0);
-        return;
-    }
+    RETURN_ERROR_IF( (strlen(temp_filepath) + 1) > answer_filepath_size, 
+        RES_ERR_GENERIC );
 
     memcpy(dot, ".out", 4);
     dot[4] = '\0'; 
 
     strncpy(answer_filepath, temp_filepath, answer_filepath_size);
     answer_filepath[answer_filepath_size - 1] = '\0'; 
+
+    return RES_OK;
 }
 
 static void * llm_operation_thread( void * arg ) {
-    llm_context_t *params = (llm_context_t *)arg;
+    llm_context_t * params = (llm_context_t *)arg;
 
     result_t res = ollama_ask_deepseek_model(params->answer_filepath, params->prompt_filepath, 
         params->llm_stop_flag);
@@ -126,11 +125,16 @@ void * llm_thread( void * arg UNUSED_PARAM ) {
 
                     memcpy(context.prompt_filepath, e.data, e.data_size);
 
-                    INFO("LLM requested.");
-
-                    create_answer_filepath_from_prompt_filepath(context.answer_filepath, 
+                    result_t res = create_answer_filepath_from_prompt_filepath(context.answer_filepath, 
                         sizeof(context.answer_filepath), context.prompt_filepath,
                         sizeof(context.prompt_filepath));
+                    if( res != RES_OK ) {
+                        ERROR("Failed to create OUT path.");
+                        continue;
+                    }
+
+                    INFO("LLM requested.");
+
                     llm_stop_flag = 0;
                     context.status = LLM_STATUS_IN_PROGRESS;
 

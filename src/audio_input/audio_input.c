@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <sys/stat.h>
+#include <errno.h>
 
 #include "utils.h"
 
@@ -31,21 +32,33 @@ typedef struct {
 
 volatile int rec_stop_flag = 0;
 
-static void create_wav_filepath_with_data( char * filepath, size_t filepath_size ) {
+static result_t create_wav_filepath_with_date( char * filepath OUTPUT, 
+        size_t filepath_size ) {
+    RETURN_IF_NULL(filepath);
+    
     time_t now = time(NULL);
-    struct tm *t = localtime(&now);
+    struct tm * t = localtime(&now);
 
     char folderpath[MAX_FILEPATH_SIZE / 2];
-    strftime(folderpath, sizeof(folderpath), DEFAULT_REC_FOLDER"/%Y-%m-%d_%H-%M-%S", t);
-    mkdir(folderpath, 0755);
+    RETURN_ERROR_IF( strftime(folderpath, sizeof(folderpath), 
+        DEFAULT_REC_FOLDER"/%Y-%m-%d_%H-%M-%S", t) == 0, 
+        RES_ERR_GENERIC );
+    RETURN_ERROR_IF( mkdir(folderpath, 0755) != 0 && errno != EEXIST, 
+        RES_ERR_GENERIC);
 
     char filename[MAX_FILEPATH_SIZE / 2];
-    strftime(filename, sizeof(filename), "rec_%Y-%m-%d_%H-%M-%S.wav", t);
-    snprintf(filepath, filepath_size, "%s/%s", folderpath, filename);
+    RETURN_ERROR_IF( strftime(filename, sizeof(filename), 
+        "rec_%Y-%m-%d_%H-%M-%S.wav", t) == 0,
+        RES_ERR_GENERIC );
+    RETURN_ERROR_IF( snprintf(filepath, filepath_size, "%s/%s", 
+        folderpath, filename) < 0,
+        RES_ERR_GENERIC );
+
+    return RES_OK;
 }
 
 static void * record_thread( void * arg ) {
-    record_context_t *params = (record_context_t *)arg;
+    record_context_t * params = (record_context_t *)arg;
 
     result_t res = record_audio(params->filepath, params->duration_s, 
         params->rec_stop_flag);
@@ -106,9 +119,15 @@ void * audio_input_thread( void * arg UNUSED_PARAM ) {
                         continue;
                     }
 
+                    result_t res = create_wav_filepath_with_date(context.filepath, 
+                        sizeof(context.filepath));
+                    if( res != RES_OK ) {
+                        ERROR("Failed to create WAV path.");
+                        continue;
+                    }
+
                     INFO("Recording requested.");
 
-                    create_wav_filepath_with_data(context.filepath, sizeof(context.filepath));
                     rec_stop_flag = 0;
                     context.status = REC_STATUS_IN_PROGRESS;
 

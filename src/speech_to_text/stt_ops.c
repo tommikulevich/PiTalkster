@@ -18,10 +18,9 @@
 
 result_t perform_speech_to_text( const char * txt_filepath OUTPUT, 
         const char * wav_filepath, volatile int * stop_flag ) {
-    ASSERT_NOT_NULL(stop_flag);
-    if( !txt_filepath || !wav_filepath || !stop_flag ) {
-        return RES_ERR_WRONG_ARGS;
-    }
+    RETURN_IF_NULL(txt_filepath);
+    RETURN_IF_NULL(wav_filepath);
+    RETURN_IF_NULL(stop_flag);
 
     vosk_set_log_level(-1);
 

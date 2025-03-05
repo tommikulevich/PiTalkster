@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <sys/time.h>
 
 // ===========
@@ -21,12 +22,27 @@ typedef enum {
     RES_ERR_NOT_READY,
     RES_ERR_INVALID_SIZE,
     RES_ERR_WRONG_ARGS,
+    RES_ERR_NULL_PTR
 } result_t;
 
 #define RETURN_ON_ERROR(result) \
     do { \
         if ((result) != RES_OK) { \
             return (result); \
+        } \
+    } while (0)
+
+#define RETURN_IF_NULL(ptr) \
+    do { \
+        if ((ptr) == NULL) { \
+            return RES_ERR_NULL_PTR; \
+        } \
+    } while (0)
+
+#define RETURN_ERROR_IF(condition, error) \
+    do { \
+        if ((condition)) { \
+            return (error); \
         } \
     } while (0)
 
@@ -38,11 +54,12 @@ typedef enum {
     LOG_LEVEL_ERROR,
     LOG_LEVEL_WARN,
     LOG_LEVEL_INFO,
-    LOG_LEVEL_DEBUG
+    LOG_LEVEL_DEBUG,
+    LOG_LEVEL_DEBUG_
 } log_level_t;
 
 #ifndef CURRENT_LOG_LEVEL
-#define CURRENT_LOG_LEVEL LOG_LEVEL_INFO
+#define CURRENT_LOG_LEVEL LOG_LEVEL_DEBUG_
 #endif
 
 #ifndef LOG_STREAM
@@ -57,7 +74,7 @@ typedef enum {
 #define CYAN    "\033[36m"
 #define MAGENTA "\033[35m"
 
-#define LOG(level, ...) \
+#define LOG(level, is_endline, ...) \
     do { \
         if (level <= CURRENT_LOG_LEVEL) { \
             const char *level_str; \
@@ -66,22 +83,26 @@ typedef enum {
                 case LOG_LEVEL_WARN:  level_str = YELLOW"[WARN]"RST;  break; \
                 case LOG_LEVEL_INFO:  level_str = BLUE"[INFO]"RST;  break; \
                 case LOG_LEVEL_DEBUG: level_str = "[DEBUG]"; break; \
+                case LOG_LEVEL_DEBUG_: \
                 default: level_str = ""; break; \
             } \
             fprintf(LOG_STREAM, "%s ", level_str); \
             fprintf(LOG_STREAM, __VA_ARGS__); \
-            fprintf(LOG_STREAM, "\n"); \
+            if( is_endline ) { fprintf(LOG_STREAM, "\n"); } \
         } \
     } while (0)
 
-#define ERROR(...) LOG(LOG_LEVEL_ERROR, __VA_ARGS__)
-#define WARN(...)  LOG(LOG_LEVEL_WARN, __VA_ARGS__)
-#define INFO(...)  LOG(LOG_LEVEL_INFO, __VA_ARGS__)
-#define DEBUG(...) LOG(LOG_LEVEL_DEBUG, __VA_ARGS__)
+#define ERROR(...) LOG(LOG_LEVEL_ERROR, true, __VA_ARGS__)
+#define WARN(...)  LOG(LOG_LEVEL_WARN, true, __VA_ARGS__)
+#define INFO(...)  LOG(LOG_LEVEL_INFO, true, __VA_ARGS__)
+#define DEBUG(...) LOG(LOG_LEVEL_DEBUG, true, __VA_ARGS__)
+#define DEBUG_(...) LOG(LOG_LEVEL_DEBUG_, false, __VA_ARGS__)
 
 // ===========
 // = Asserts =
 // ===========
+
+#define SLEEP_TIME_ASSERT_FAILED_S  5
 
 #define STATIC_ASSERT(cond, msg) _Static_assert(cond, msg)
 
@@ -89,6 +110,7 @@ typedef enum {
     do {                                    \
         if (!(condition)) {                      \
             ERROR("Assertion failed: %s\n", #condition); \
+            sleep(SLEEP_TIME_ASSERT_FAILED_S); \
             exit(EXIT_FAILURE);             \
         }                                   \
     } while (0)

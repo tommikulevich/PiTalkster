@@ -29,37 +29,36 @@ typedef struct {
 
 volatile int stt_stop_flag = 0;
 
-static void create_txt_filepath_from_wav_filepath( char * txt_filepath, 
+static result_t create_txt_filepath_from_wav_filepath( char * txt_filepath, 
         size_t txt_filepath_size, char * wav_filepath, size_t wav_filepath_size ) {
-    ASSERT_NOT_NULL(txt_filepath);
-    ASSERT(txt_filepath_size != 0);
-    ASSERT_NOT_NULL(wav_filepath);
-    ASSERT(strlen(wav_filepath) != 0);
+    RETURN_IF_NULL(txt_filepath);
+    RETURN_ERROR_IF( txt_filepath_size == 0, 
+        RES_ERR_GENERIC );
+    RETURN_IF_NULL(wav_filepath);
+    RETURN_ERROR_IF( strlen(wav_filepath) == 0,
+        RES_ERR_GENERIC );
 
     char temp_filepath[wav_filepath_size];
     strncpy(temp_filepath, wav_filepath, wav_filepath_size);
     temp_filepath[sizeof(temp_filepath) - 1] = '\0';
 
     char * dot = strrchr(temp_filepath, '.');
-    if( dot == NULL ) {
-        ASSERT(0);
-        return;
-    }
+    RETURN_ERROR_IF( !dot, RES_ERR_GENERIC );
 
-    if( (strlen(temp_filepath) + 1) > txt_filepath_size ) {
-        ASSERT(0);
-        return;
-    }
+    RETURN_ERROR_IF( (strlen(temp_filepath) + 1) > txt_filepath_size, 
+        RES_ERR_GENERIC );
 
     memcpy(dot, ".txt", 4);
     dot[4] = '\0'; 
 
     strncpy(txt_filepath, temp_filepath, txt_filepath_size);
     txt_filepath[txt_filepath_size - 1] = '\0'; 
+
+    return RES_OK;
 }
 
 static void * stt_operation_thread( void * arg ) {
-    stt_context_t *params = (stt_context_t *)arg;
+    stt_context_t * params = (stt_context_t *)arg;
 
     result_t res = perform_speech_to_text(params->txt_filepath, params->wav_filepath, 
         params->stt_stop_flag);
@@ -126,11 +125,16 @@ void * stt_thread( void * arg UNUSED_PARAM ) {
 
                     memcpy(context.wav_filepath, e.data, e.data_size);
 
-                    INFO("STT requested.");
-
-                    create_txt_filepath_from_wav_filepath(context.txt_filepath, 
+                    result_t res = create_txt_filepath_from_wav_filepath(context.txt_filepath, 
                         sizeof(context.txt_filepath), context.wav_filepath,
                         sizeof(context.wav_filepath));
+                    if( res != RES_OK ) {
+                        ERROR("Failed to create TXT path.");
+                        continue;
+                    }
+
+                    INFO("STT requested.");
+
                     stt_stop_flag = 0;
                     context.status = STT_STATUS_IN_PROGRESS;
 

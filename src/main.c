@@ -9,6 +9,7 @@
 #include "event_broker.h"
 #include "core.h"
 #include "stt.h"
+#include "llm.h"
 
 
 int main( int argc UNUSED_PARAM, char *argv[] UNUSED_PARAM ) {
@@ -21,6 +22,7 @@ int main( int argc UNUSED_PARAM, char *argv[] UNUSED_PARAM ) {
     ASSERT( broker_init() == RES_OK );
     ASSERT( core_init() == RES_OK );
     ASSERT( stt_init() == RES_OK );
+    ASSERT( llm_init() == RES_OK );
 
     // Audio input thread
     pthread_t thr_audio;
@@ -29,6 +31,10 @@ int main( int argc UNUSED_PARAM, char *argv[] UNUSED_PARAM ) {
     // STT thread
     pthread_t thr_stt;
     pthread_create(&thr_stt, NULL, stt_thread, NULL);
+
+    // LLM thread
+    pthread_t thr_llm;
+    pthread_create(&thr_llm, NULL, llm_thread, NULL);
 
     // Main core thread
     pthread_t thr_core;

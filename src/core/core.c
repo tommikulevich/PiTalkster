@@ -46,6 +46,7 @@ void * core_thread( void * arg UNUSED_PARAM ) {
                         }
 
                         case BUTTON_DOWN_GPIO: {
+                            // TODO: cancel another operations
                             event_t event = STRUCT_INIT_ALL_ZEROS;
                             result_t res = event_create(
                                 COMPONENT_CORE_DISP, COMPONENT_AUDIO_INPUT,

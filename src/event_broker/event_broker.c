@@ -11,7 +11,7 @@ result_t broker_init( void ) {
 }
 
 result_t broker_publish( event_t * e ) {
-    ASSERT_NOT_NULL(e);
+    RETURN_IF_NULL(e);
     
     INFO(CYAN"[⇧] PUBLISH EVENT \'%s\' FROM [%s] TO [%s]. DATA SIZE: %ld"RST, 
         event_type_enum_to_string(e->type),
@@ -28,7 +28,7 @@ result_t broker_publish( event_t * e ) {
 }
 
 result_t broker_pop( sys_component_t c, event_t * e OUTPUT ) {
-    ASSERT_NOT_NULL(e);
+    RETURN_IF_NULL(e);
 
     result_t res = event_queue_pop(&g_queue, c, e);
     if( res != RES_OK ) {

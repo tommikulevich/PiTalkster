@@ -1,16 +1,31 @@
-#include <pthread.h>
+/**
+ *******************************************************************************
+ * @file    main.c
+ * @brief   Main app source file.
+ *******************************************************************************
+ */
+
+/************
+ * INCLUDES *
+ ************/
+
+#include <stdlib.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #include "utils.h"
 
-#include "controls.h"
 #include "audio_input.h"
+#include "controls.h"
+#include "core.h"
 #include "display.h"
 #include "event_broker.h"
-#include "core.h"
-#include "stt.h"
 #include "llm.h"
+#include "stt.h"
 
+/*****************
+ * MAIN FUNCTION *
+ *****************/
 
 int main( int argc UNUSED_PARAM, char *argv[] UNUSED_PARAM ) {
     // HW
@@ -39,6 +54,7 @@ int main( int argc UNUSED_PARAM, char *argv[] UNUSED_PARAM ) {
     // Main core thread
     pthread_t thr_core;
     pthread_create(&thr_core, NULL, core_thread, NULL);
+
     pthread_join(thr_core, NULL); 
 
     return EXIT_FAILURE;    // Something wrong happend if we reached this

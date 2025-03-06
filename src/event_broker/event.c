@@ -10,7 +10,7 @@ result_t event_create( sys_component_t src, sys_component_t dest,
     RETURN_IF_NULL(event);
 
     if( data_size > EVENT_MAX_DATA_SIZE ) {
-        ERROR("Failed to create event %s: data size %ld > %d!",
+        ERROR("Failed to create event %s: data size %zu > %d!",
             event_type_enum_to_string(type), data_size, EVENT_MAX_DATA_SIZE);
         return RES_ERR_INVALID_SIZE;
     }

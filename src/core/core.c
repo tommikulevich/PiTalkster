@@ -22,6 +22,7 @@
 #include "event_broker.h"
 #include "controls.h"
 #include "controls_gpio.h"
+#include "display.h"
 
 /********************
  * STATIC FUNCTIONS *
@@ -58,6 +59,8 @@ static void rec_stop_event_publish( void ) {
  ********************/
 
 void * core_thread( void * arg UNUSED_PARAM ) {
+    display_menu_t menu = STRUCT_INIT_ALL_ZEROS;
+
     while(1) {
         event_t e = STRUCT_INIT_ALL_ZEROS;
         if( broker_pop(COMPONENT_CORE_DISP, &e) == RES_OK ) {
@@ -65,7 +68,8 @@ void * core_thread( void * arg UNUSED_PARAM ) {
                 case EVENT_BUT_PRESSED: {
                     button_gpio_t gpio;
                     if( e.data_size != sizeof(gpio) ) {
-                        ERROR("Failed GPIO data in event.");
+                        display_menu_append_text(&menu, 
+                            "Failed GPIO data in event.\n", COLOR_STATUS);
                         continue;
                     }
     
@@ -95,22 +99,28 @@ void * core_thread( void * arg UNUSED_PARAM ) {
                 }
 
                 case EVENT_PIPELINE_DONE: {
-                    INFO("Pipeline done");
+                    display_menu_append_text(&menu, "Pipeline done.\n", COLOR_STATUS);
                     break;
                 }
 
                 case EVENT_REC_STATUS: {
-                    INFO("%.*s", (int)e.data_size, e.data);
+                    char msg[EVENT_MAX_DATA_SIZE];
+                    snprintf(msg, sizeof(msg), "%.*s", (int)e.data_size, e.data);
+                    display_menu_update_line(&menu, msg, COLOR_STATUS);
                     break;
                 }
 
                 case EVENT_STT_STATUS: {
-                    INFO("%.*s", (int)e.data_size, e.data);
+                    char msg[EVENT_MAX_DATA_SIZE];
+                    snprintf(msg, sizeof(msg), "%.*s", (int)e.data_size, e.data);
+                    display_menu_update_line(&menu, msg, COLOR_STATUS);
                     break;
                 }
 
                 case EVENT_LLM_STATUS: {
-                    INFO("(Partial answer) %.*s", (int)e.data_size, e.data);
+                    char msg[EVENT_MAX_DATA_SIZE];
+                    snprintf(msg, sizeof(msg), "%.*s", (int)e.data_size, e.data);
+                    display_menu_append_text(&menu, msg, COLOR_ANSWER);
                     break;
                 }
 

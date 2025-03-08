@@ -141,9 +141,8 @@ static void llm_response_callback( char * data, size_t size, void * user_data ) 
     fflush(output_file);
 
     char msg[EVENT_MAX_DATA_SIZE];
-    snprintf(msg, sizeof(msg), "%.*s", (int)size, data);
-    llm_status_event_publish(msg, 
-        sizeof(msg));
+    snprintf(msg, strlen(data) + 1, "%.*s", (int)size, data);
+    llm_status_event_publish(msg, strlen(data));
 }
 
 /********************
@@ -171,7 +170,7 @@ void * llm_thread( void * arg UNUSED_PARAM ) {
             }
 
             case LLM_STATUS_FINISHED_OK: {
-                const char * status_msg = "LLM finished.";
+                const char * status_msg = "\nLLM finished.\n";
                 llm_status_event_publish(status_msg, 
                     strlen(status_msg));
                 pipeline_done_event_publish(context.answer_filepath, 
@@ -181,7 +180,7 @@ void * llm_thread( void * arg UNUSED_PARAM ) {
             }
 
             case LLM_STATUS_FINISHED_ERROR: {
-                const char * error_msg = "Error: LLM failed.";
+                const char * error_msg = "Error: LLM failed.\n";
                 llm_status_event_publish(error_msg, 
                     strlen(error_msg));
                 llm_context_clear(&context);
@@ -199,7 +198,7 @@ void * llm_thread( void * arg UNUSED_PARAM ) {
                 case EVENT_LLM_REQUEST: {
                     if( context.status != LLM_STATUS_NOT_STARTED ) {
                         const char * status_msg = 
-                            "Ignoring LLM request (already started).";
+                            "Ignoring LLM request (already started).\n";
                         llm_status_event_publish(status_msg, 
                             strlen(status_msg));
                         continue;
@@ -207,7 +206,7 @@ void * llm_thread( void * arg UNUSED_PARAM ) {
 
                     if( e.data_size > sizeof(context.prompt_filepath) ) {
                         const char * error_msg = 
-                            "Error: Failed TXT path in event.";
+                            "Error: Failed TXT path in event.\n";
                         llm_status_event_publish(error_msg, 
                             strlen(error_msg));
                         continue;
@@ -220,11 +219,14 @@ void * llm_thread( void * arg UNUSED_PARAM ) {
                         context.prompt_filepath, sizeof(context.prompt_filepath));
                     if( res != RES_OK ) {
                         const char * error_msg = 
-                            "Error: Failed to create OUT path.";
+                            "Error: Failed to create OUT path.\n";
                         llm_status_event_publish(error_msg, 
                             strlen(error_msg));
                         continue;
                     }
+
+                    const char * msg = "LLM start.\n";
+                    llm_status_event_publish(msg, strlen(msg));
 
                     llm_stop_flag = 0;
                     pthread_create(&llm_op_thread, NULL, llm_operation_thread, &context);
@@ -235,7 +237,7 @@ void * llm_thread( void * arg UNUSED_PARAM ) {
                 case EVENT_LLM_STOP: {
                     if( context.status != LLM_STATUS_IN_PROGRESS ) {
                         const char * status_msg = 
-                            "Ignoring stopping LLM request (not started).";
+                            "Ignoring stopping LLM request (not started).\n";
                         llm_status_event_publish(status_msg, 
                             strlen(status_msg));
                         continue;

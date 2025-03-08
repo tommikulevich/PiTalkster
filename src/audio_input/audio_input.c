@@ -159,17 +159,19 @@ void * audio_input_thread( void * arg UNUSED_PARAM ) {
                 break;
 
             case REC_STATUS_IN_PROGRESS: {
-                char status_msg[32];
-                snprintf(status_msg, sizeof(status_msg), 
-                    "Recording progress: %d/%ds", *context.rec_progress,
-                    context.duration_s);
-                rec_status_event_publish(status_msg, 
-                    strlen(status_msg));
+                DO_WITH_INTERVAL_MS(500, {
+                    char status_msg[32];
+                    snprintf(status_msg, sizeof(status_msg), 
+                        "Recording progress: %d/%ds", *context.rec_progress,
+                        context.duration_s);
+                    rec_status_event_publish(status_msg, 
+                        strlen(status_msg));
+                });
                 break;
             }
 
             case REC_STATUS_FINISHED_OK: {
-                const char * status_msg = "Recording finished.";
+                const char * status_msg = "Recording finished.\n";
                 rec_status_event_publish(status_msg, 
                     strlen(status_msg));
                 stt_request_event_publish(context.wav_filepath, 
@@ -179,7 +181,7 @@ void * audio_input_thread( void * arg UNUSED_PARAM ) {
             }
 
             case REC_STATUS_FINISHED_ERROR: {
-                const char * error_msg = "Error: Recording failed.";
+                const char * error_msg = "Error: Recording failed.\n";
                 rec_status_event_publish(error_msg, 
                     strlen(error_msg));
                 rec_context_clear(&context);
@@ -197,7 +199,7 @@ void * audio_input_thread( void * arg UNUSED_PARAM ) {
                 case EVENT_REC_REQUEST: {
                     if( context.status != REC_STATUS_NOT_STARTED ) {
                         const char * status_msg = 
-                            "Ignoring recording request (already started).";
+                            "Ignoring recording request (already started).\n";
                         rec_status_event_publish(status_msg, 
                             strlen(status_msg));
                         continue;
@@ -207,11 +209,14 @@ void * audio_input_thread( void * arg UNUSED_PARAM ) {
                         sizeof(context.wav_filepath));
                     if( res != RES_OK ) {
                         const char * error_msg = 
-                            "Error: Failed to create WAV path.";
+                            "Error: Failed to create WAV path.\n";
                         rec_status_event_publish(error_msg, 
                             strlen(error_msg));
                         continue;
                     }
+
+                    const char * msg = "Recording start.\n";
+                    rec_status_event_publish(msg, strlen(msg));
 
                     rec_stop_flag = 0;
                     pthread_create(&rec_thread, NULL, record_thread, &context);
@@ -222,7 +227,7 @@ void * audio_input_thread( void * arg UNUSED_PARAM ) {
                 case EVENT_REC_STOP: {
                     if( context.status != REC_STATUS_IN_PROGRESS ) {
                         const char * status_msg = 
-                            "Ignoring stopping recording request (not started).";
+                            "Ignoring stopping recording request (not started).\n";
                         rec_status_event_publish(status_msg, 
                             strlen(status_msg));
                         continue;

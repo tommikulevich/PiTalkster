@@ -157,16 +157,18 @@ void * stt_thread( void * arg UNUSED_PARAM ) {
                 break;
 
             case STT_STATUS_IN_PROGRESS: {
-                char status_msg[32];
-                snprintf(status_msg, sizeof(status_msg), 
-                    "STT progress: %d/100%%", *context.stt_progress);
-                stt_status_event_publish(status_msg, 
-                    strlen(status_msg));
+                DO_WITH_INTERVAL_MS(500, {
+                    char status_msg[32];
+                    snprintf(status_msg, sizeof(status_msg), 
+                        "STT progress: %d/100%%", *context.stt_progress);
+                    stt_status_event_publish(status_msg, 
+                        strlen(status_msg));
+                });
                 break;
             }
 
             case STT_STATUS_FINISHED_OK: {
-                const char * status_msg = "STT finished.";
+                const char * status_msg = "STT finished.\n";
                 stt_status_event_publish(status_msg, 
                     strlen(status_msg));
                 llm_request_event_publish(context.txt_filepath, 
@@ -176,7 +178,7 @@ void * stt_thread( void * arg UNUSED_PARAM ) {
             }
 
             case STT_STATUS_FINISHED_ERROR: {
-                const char * error_msg = "Error: STT failed.";
+                const char * error_msg = "Error: STT failed.\n";
                 stt_status_event_publish(error_msg, 
                     strlen(error_msg));
                 stt_context_clear(&context);
@@ -194,7 +196,7 @@ void * stt_thread( void * arg UNUSED_PARAM ) {
                 case EVENT_STT_REQUEST: {
                     if( context.status != STT_STATUS_NOT_STARTED ) {
                         const char * status_msg = 
-                            "Ignoring STT request (already started).";
+                            "Ignoring STT request (already started).\n";
                         stt_status_event_publish(status_msg, 
                             strlen(status_msg));
                         continue;
@@ -202,7 +204,7 @@ void * stt_thread( void * arg UNUSED_PARAM ) {
 
                     if( e.data_size > sizeof(context.wav_filepath) ) {
                         const char * error_msg = 
-                            "Error: Failed WAV path in event.";
+                            "Error: Failed WAV path in event.\n";
                         stt_status_event_publish(error_msg, 
                             strlen(error_msg));
                         continue;
@@ -215,11 +217,14 @@ void * stt_thread( void * arg UNUSED_PARAM ) {
                         context.wav_filepath, sizeof(context.wav_filepath));
                     if( res != RES_OK ) {
                         const char * error_msg = 
-                            "Error: Failed to create TXT path.";
+                            "Error: Failed to create TXT path.\n";
                         stt_status_event_publish(error_msg, 
                             strlen(error_msg));
                         continue;
                     }
+
+                    const char * msg = "STT start.\n";
+                    stt_status_event_publish(msg, strlen(msg));
 
                     stt_stop_flag = 0;
                     pthread_create(&stt_op_thread, NULL, stt_operation_thread, &context);
@@ -230,7 +235,7 @@ void * stt_thread( void * arg UNUSED_PARAM ) {
                 case EVENT_STT_STOP: {
                     if( context.status != STT_STATUS_IN_PROGRESS ) {
                         const char * status_msg = 
-                            "Ignoring stopping STT request (not started).";
+                            "Ignoring stopping STT request (not started).\n";
                         stt_status_event_publish(status_msg, 
                             strlen(status_msg));
                         continue;

@@ -54,7 +54,7 @@ extern "C"{
  * @brief st7789 basic example default definition
  */
 #define ST7789_BASIC_DEFAULT_COLUMN                             240                                             /**< 240 */
-#define ST7789_BASIC_DEFAULT_ROW                                320                                             /**< 320 */
+#define ST7789_BASIC_DEFAULT_ROW                                240                                             /**< 240 */
 #define ST7789_BASIC_DEFAULT_GAMMA_CURVE                        ST7789_GAMMA_CURVE_1
 #define ST7789_BASIC_DEFAULT_ACCESS                            (ST7789_ORDER_PAGE_TOP_TO_BOTTOM | \
                                                                 ST7789_ORDER_COLUMN_LEFT_TO_RIGHT | \

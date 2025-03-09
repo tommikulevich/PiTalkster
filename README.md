@@ -50,7 +50,7 @@ The system:
 
 #### SW Diagram
 
-![SW Diagram](docs/PiTalkster_SW_v0.1.png)
+![SW Diagram](docs/PiTalkster_SW_v0.2.png)
 
 ### 📟 Usage
 

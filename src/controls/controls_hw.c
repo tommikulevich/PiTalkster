@@ -1,3 +1,15 @@
+/**
+ *******************************************************************************
+ * @file    controls_hw.c
+ * @brief   Controls HW source file.
+ *          Interaction with physical buttons using gpiod.
+ *******************************************************************************
+ */
+
+/************
+ * INCLUDES *
+ ************/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -9,8 +21,16 @@
 
 #include "controls_hw.h"
 
+/******************************
+ * PRIVATE MACROS AND DEFINES *
+ ******************************/
+
 #define DEBOUNCE_TIME_US    2000
 #define GPIO_CHIP_PATH      "/dev/gpiochip0"
+
+/********************
+ * PRIVATE TYPEDEFS *
+ ********************/
 
 struct button_info_t {
     button_gpio_t gpio;
@@ -22,8 +42,16 @@ struct button_info_t {
     struct button_info_t * next;
 };
 
+/********************
+ * STATIC VARIABLES *
+ ********************/
+
 static struct gpiod_chip * chip;
 static struct button_info_t * buttons_list = NULL;
+
+/********************
+ * STATIC FUNCTIONS *
+ ********************/
 
 static void * button_event_thread( void * arg ) {
     struct button_info_t * info = (struct button_info_t *)arg;
@@ -48,6 +76,10 @@ static void * button_event_thread( void * arg ) {
     
     return NULL;
 }
+
+/********************
+ * GLOBAL FUNCTIONS *
+ ********************/
 
 result_t controls_hw_init_button( button_gpio_t gpio, button_handler_t handler ) {
     if( !chip ) {

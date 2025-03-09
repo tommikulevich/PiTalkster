@@ -1,14 +1,29 @@
+/**
+ *******************************************************************************
+ * @file    event_broker.c
+ * @brief   Event broker source file.
+ *******************************************************************************
+ */
+
+/************
+ * INCLUDES *
+ ************/
+
 #include "utils.h"
 
 #include "event.h"
 #include "event_queue.h"
 #include "event_broker.h"
 
+/********************
+ * STATIC VARIABLES *
+ ********************/
+
 static event_queue_t g_queue;
 
-result_t broker_init( void ) {
-    return event_queue_init(&g_queue);
-}
+/********************
+ * GLOBAL FUNCTIONS *
+ ********************/
 
 result_t broker_publish( event_t * e ) {
     RETURN_IF_NULL(e);
@@ -43,4 +58,8 @@ result_t broker_pop( sys_component_t c, event_t * e OUTPUT ) {
         e->data_size);
 
     return res;
+}
+
+result_t broker_init( void ) {
+    return event_queue_init(&g_queue);
 }

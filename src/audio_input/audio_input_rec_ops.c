@@ -1,3 +1,15 @@
+/**
+ *******************************************************************************
+ * @file    audio_input_rec_ops.c
+ * @brief   Recording operations source file. 
+ *          Interaction with the microphone using ALSA.
+ *******************************************************************************
+ */
+
+/************
+ * INCLUDES *
+ ************/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -8,7 +20,15 @@
 
 #include "audio_input_rec_ops.h"
 
+/******************************
+ * PRIVATE MACROS AND DEFINES *
+ ******************************/
+
 #define WAV_HEADER_SIZE_BYTES   44
+
+/********************
+ * PRIVATE TYPEDEFS *
+ ********************/
 
 typedef struct {
     const char * device_name;
@@ -19,6 +39,10 @@ typedef struct {
     snd_pcm_uframes_t buffer_size;
     uint16_t bits_per_sample;
 } audio_settings_t;
+
+/********************
+ * STATIC FUNCTIONS *
+ ********************/
 
 static result_t setup_pcm_capture( snd_pcm_t ** handle, 
         snd_pcm_hw_params_t ** params, audio_settings_t * settings ) {
@@ -165,11 +189,16 @@ static result_t write_wav_header( FILE * fp, uint32_t data_chunk_size,
     return RES_OK;
 }
 
-result_t record_audio( const char * filepath OUTPUT, int duration_s, 
-        volatile int * stop_flag ) {
-    RETURN_IF_NULL(filepath);
+/********************
+ * GLOBAL FUNCTIONS *
+ ********************/
+
+result_t record_audio_to_wav( const char * wav_filepath, int duration_s, 
+        volatile int * stop_flag, volatile int * progress ) {
+    RETURN_IF_NULL(wav_filepath);
     RETURN_ERROR_IF( duration_s <= 0, RES_ERR_WRONG_ARGS );
     RETURN_IF_NULL(stop_flag);
+    RETURN_IF_NULL(progress);
 
     audio_settings_t settings = {
         .device_name = "plughw:1",
@@ -202,7 +231,7 @@ result_t record_audio( const char * filepath OUTPUT, int duration_s,
         return RES_ERR_GENERIC;
     }
 
-    fp = fopen(filepath, "wb");
+    fp = fopen(wav_filepath, "wb");
     if( !fp ) {
         free(buffer);
         snd_pcm_hw_params_free(hw_params);
@@ -220,6 +249,7 @@ result_t record_audio( const char * filepath OUTPUT, int duration_s,
 
     snd_pcm_uframes_t frames_recorded = 0;
     snd_pcm_uframes_t total_frames = (snd_pcm_uframes_t)duration_s * settings.rate;
+    int last_reported_seconds = -1;
 
     while( frames_recorded < total_frames && !(*stop_flag) ) {
         snd_pcm_uframes_t frames_to_read = buffer_frames;
@@ -246,7 +276,14 @@ result_t record_audio( const char * filepath OUTPUT, int duration_s,
                 snd_pcm_close(capture_handle);
                 return RES_ERR_GENERIC;
             }
+
             frames_recorded += (snd_pcm_uframes_t)rc;
+
+            int current_seconds = (int)(frames_recorded / settings.rate);
+            if (current_seconds != last_reported_seconds) {
+                *progress = current_seconds;  
+                last_reported_seconds = current_seconds;  
+            }
         }
     }
 

@@ -1,3 +1,14 @@
+/**
+ *******************************************************************************
+ * @file    controls.c
+ * @brief   Controls source file.
+ *******************************************************************************
+ */
+
+/************
+ * INCLUDES *
+ ************/
+
 #include <stdint.h>
 #include <string.h>
 
@@ -5,6 +16,10 @@
 #include "controls_hw.h"
 #include "controls_gpio.h"
 #include "event_broker.h"
+
+/********************
+ * STATIC FUNCTIONS *
+ ********************/
 
 static void button_event_publish( button_gpio_t button_gpio ) {
     event_t event = STRUCT_INIT_ALL_ZEROS;
@@ -19,7 +34,11 @@ static void button_event_publish( button_gpio_t button_gpio ) {
     }
 }
 
-result_t controls_init(void) {
+/********************
+ * GLOBAL FUNCTIONS *
+ ********************/
+
+result_t controls_init( void ) {
     RETURN_ON_ERROR( controls_hw_init_button(BUTTON_UP_GPIO, button_event_publish) );
     RETURN_ON_ERROR( controls_hw_init_button(BUTTON_OK_GPIO, button_event_publish) );
     RETURN_ON_ERROR( controls_hw_init_button(BUTTON_DOWN_GPIO, button_event_publish) );

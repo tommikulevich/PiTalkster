@@ -1,7 +1,22 @@
+/**
+ *******************************************************************************
+ * @file    event_queue.c
+ * @brief   Event queue source file.
+ *******************************************************************************
+ */
+
+/************
+ * INCLUDES *
+ ************/
+
 #include "utils.h"
 
 #include "event.h"
 #include "event_queue.h"
+
+/********************
+ * GLOBAL FUNCTIONS *
+ ********************/
 
 result_t event_queue_init( event_queue_t * q ) {
     RETURN_IF_NULL(q);

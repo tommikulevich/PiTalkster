@@ -1,3 +1,15 @@
+/**
+ *******************************************************************************
+ * @file    ollama_api_ops.c
+ * @brief   Ollama API operations source file.
+ *          Interaction (curl) with DeepSeek using Ollama API.
+ *******************************************************************************
+ */
+
+/************
+ * INCLUDES *
+ ************/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -9,9 +21,17 @@
 
 #include "ollama_api_ops.h"
 
+/******************************
+ * PRIVATE MACROS AND DEFINES *
+ ******************************/
+
 #define READ_BUFFER_SIZE_BYTES      4096
 #define DEFAULT_DEEPSEEK_MODEL      "deepseek-r1:1.5b"
 #define DEFAULT_OLLAMA_URL          "http://localhost:11434/api/generate"
+
+/********************
+ * PRIVATE TYPEDEFS *
+ ********************/
 
 typedef struct {
     char * data;
@@ -19,16 +39,12 @@ typedef struct {
     volatile int * stop_flag;
     void * user_data;
 
-    void (* callback)(char * data, size_t size, void * user_data);
+    response_callback_t callback;
 } ollama_response_data_t;
 
-static void ollama_response_callback( char * data, size_t size, void * user_data ) {
-    FILE * output_file = (FILE *)user_data;
-    fprintf(output_file, "%.*s", (int)size, data);
-    fflush(output_file);
-    DEBUG_("%.*s", (int)size, data);    // TODO: send to display
-    fflush(stdout);
-}
+/********************
+ * STATIC FUNCTIONS *
+ ********************/
 
 static size_t ollama_write_callback( char * ptr, size_t size, size_t nmemb, 
         void * user_data ) {
@@ -72,8 +88,13 @@ static size_t ollama_write_callback( char * ptr, size_t size, size_t nmemb,
     return total_size;
 }
 
-result_t ollama_ask_deepseek_model( const char * answer_filepath OUTPUT,
-        const char * prompt_filepath, volatile int * stop_flag) {
+/********************
+ * GLOBAL FUNCTIONS *
+ ********************/
+
+result_t ollama_ask_deepseek_model( 
+        const char * answer_filepath, const char * prompt_filepath, 
+        volatile int * stop_flag, response_callback_t callback ) {
     RETURN_IF_NULL(answer_filepath);
     RETURN_IF_NULL(prompt_filepath);
     RETURN_IF_NULL(stop_flag);
@@ -118,7 +139,7 @@ result_t ollama_ask_deepseek_model( const char * answer_filepath OUTPUT,
     
     ollama_response_data_t resp;
     memset(&resp, 0, sizeof(ollama_response_data_t));
-    resp.callback = ollama_response_callback;
+    resp.callback = callback;
     resp.user_data = output_file;
     resp.stop_flag = stop_flag;
     curl_easy_setopt(curl, CURLOPT_URL, DEFAULT_OLLAMA_URL);

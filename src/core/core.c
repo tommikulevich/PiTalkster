@@ -1,3 +1,16 @@
+/**
+ *******************************************************************************
+ * @file    core.c
+ * @brief   Core source file.
+ *          Includes thread with event-driven part.
+ *          Coordinates the display and buttons.
+ *******************************************************************************
+ */
+
+/************
+ * INCLUDES *
+ ************/
+
 #include <stdint.h>
 #include <string.h>
 #include <pthread.h>
@@ -9,9 +22,45 @@
 #include "event_broker.h"
 #include "controls.h"
 #include "controls_gpio.h"
+#include "display.h"
 
+/********************
+ * STATIC FUNCTIONS *
+ ********************/
+
+static void rec_request_event_publish( void ) {    
+    event_t event = STRUCT_INIT_ALL_ZEROS;
+    result_t res = event_create(
+        COMPONENT_CORE_DISP, COMPONENT_AUDIO_INPUT,
+        EVENT_REC_REQUEST, 
+        NULL, 0,
+        &event);
+
+    if( res == RES_OK ) {
+        broker_publish(&event);
+    }
+}
+
+static void rec_stop_event_publish( void ) {
+    event_t event = STRUCT_INIT_ALL_ZEROS;
+    result_t res = event_create(
+        COMPONENT_CORE_DISP, COMPONENT_AUDIO_INPUT,
+        EVENT_REC_STOP, 
+        NULL, 0,
+        &event);
+
+    if( res == RES_OK ) {
+        broker_publish(&event);
+    }
+}
+
+/********************
+ * GLOBAL FUNCTIONS *
+ ********************/
 
 void * core_thread( void * arg UNUSED_PARAM ) {
+    display_menu_t menu = STRUCT_INIT_ALL_ZEROS;
+
     while(1) {
         event_t e = STRUCT_INIT_ALL_ZEROS;
         if( broker_pop(COMPONENT_CORE_DISP, &e) == RES_OK ) {
@@ -19,7 +68,8 @@ void * core_thread( void * arg UNUSED_PARAM ) {
                 case EVENT_BUT_PRESSED: {
                     button_gpio_t gpio;
                     if( e.data_size != sizeof(gpio) ) {
-                        ERROR("Failed GPIO data in event.");
+                        display_menu_append_text(&menu, 
+                            "Failed GPIO data in event.\n", COLOR_STATUS);
                         continue;
                     }
     
@@ -27,17 +77,8 @@ void * core_thread( void * arg UNUSED_PARAM ) {
 
                     switch( gpio ) {
                         case BUTTON_UP_GPIO: {
-                            event_t event = STRUCT_INIT_ALL_ZEROS;
-                            result_t res = event_create(
-                                COMPONENT_CORE_DISP, COMPONENT_AUDIO_INPUT,
-                                EVENT_REC_REQUEST, 
-                                NULL, 0,
-                                &event);
-
-                            if( res == RES_OK ) {
-                                broker_publish(&event);
-                            }
-                            
+                            // TODO: start another operations depending on state
+                            rec_request_event_publish();
                             break;
                         }
 
@@ -46,17 +87,8 @@ void * core_thread( void * arg UNUSED_PARAM ) {
                         }
 
                         case BUTTON_DOWN_GPIO: {
-                            // TODO: cancel another operations
-                            event_t event = STRUCT_INIT_ALL_ZEROS;
-                            result_t res = event_create(
-                                COMPONENT_CORE_DISP, COMPONENT_AUDIO_INPUT,
-                                EVENT_REC_CANCEL, 
-                                NULL, 0,
-                                &event);
-
-                            if( res == RES_OK ) {
-                                broker_publish(&event);
-                            }
+                            // TODO: stop another operations depending on state
+                            rec_stop_event_publish();
                         }
 
                         default: 
@@ -67,27 +99,28 @@ void * core_thread( void * arg UNUSED_PARAM ) {
                 }
 
                 case EVENT_PIPELINE_DONE: {
-                    INFO("Yeah, all things done!");
+                    display_menu_append_text(&menu, "Pipeline done.\n", COLOR_STATUS);
                     break;
                 }
 
-                case EVENT_REC_ERROR: {
-                    INFO("Oh no, recording error!");
+                case EVENT_REC_STATUS: {
+                    char msg[EVENT_MAX_DATA_SIZE];
+                    snprintf(msg, sizeof(msg), "%.*s", (int)e.data_size, e.data);
+                    display_menu_update_line(&menu, msg, COLOR_STATUS);
                     break;
                 }
 
-                case EVENT_STT_ERROR: {
-                    INFO("Oh no, STT error!");
+                case EVENT_STT_STATUS: {
+                    char msg[EVENT_MAX_DATA_SIZE];
+                    snprintf(msg, sizeof(msg), "%.*s", (int)e.data_size, e.data);
+                    display_menu_update_line(&menu, msg, COLOR_STATUS);
                     break;
                 }
 
-                case EVENT_LLM_ERROR: {
-                    INFO("Oh no, LLM error!");
-                    break;
-                }
-
-                case EVENT_DISPLAY_UPDATE: {
-                    INFO("Display need update...");
+                case EVENT_LLM_STATUS: {
+                    char msg[EVENT_MAX_DATA_SIZE];
+                    snprintf(msg, sizeof(msg), "%.*s", (int)e.data_size, e.data);
+                    display_menu_append_text(&menu, msg, COLOR_ANSWER);
                     break;
                 }
 

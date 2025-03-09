@@ -1,5 +1,22 @@
+/**
+ *******************************************************************************
+ * @file    utils.h
+ * @brief   Utility header file.
+ *          Macros, typedef etc. for common tasks such as I/O operations, 
+ *          assertions and time measurements.
+ *******************************************************************************
+ */
+
 #ifndef UTILS_H
 #define UTILS_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/************
+ * INCLUDES *
+ ************/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -126,5 +143,19 @@ static inline uint64_t get_current_time_us( void ) {
     gettimeofday(&tv, NULL);
     return ((uint64_t)tv.tv_sec) * 1000000ULL + (uint64_t)tv.tv_usec;
 }
+
+#define DO_WITH_INTERVAL_MS(milliseconds, code) \
+    do { \
+        static uint64_t last_time = 0; \
+        uint64_t current_time = get_current_time_us(); \
+        if ((current_time - last_time) >= (milliseconds * 1000ULL)) { \
+            last_time = current_time; \
+            code \
+        } \
+    } while (0)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

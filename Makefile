@@ -33,16 +33,20 @@ DEPS = $(OBJS:.o=.d) $(LIB_OBJS:.o=.d)
 all: $(BUILD_DIR)/$(PROJECT_NAME)
 
 $(BUILD_DIR)/$(PROJECT_NAME): $(OBJS) $(LIB_OBJS)
+	@echo "Building $(PROJECT_NAME)."
 	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
+	@$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
+	@echo "All is done."
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
+	@echo "Compiling $<"
 	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
+	@$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
 
 $(BUILD_DIR)/lib/%.o: $(EXT_LIB_DIR)/%.c
+	@echo "Compiling external library $<"
 	@mkdir -p $(@D)
-	$(CC) $(EXT_LIB_CFLAGS) -MMD -MP -c $< -o $@
+	@$(CC) $(EXT_LIB_CFLAGS) -MMD -MP -c $< -o $@
 
 -include $(DEPS)
 
@@ -52,8 +56,9 @@ test:
 	$(MAKE) -C tests TARGET=$(TARGET)
 
 clean:
-	rm -rf $(BUILD_DIR)
-	find . -name '*.gc*' -delete
+	@echo "Cleaning."
+	@rm -rf $(BUILD_DIR)
+	@find . -name '*.gc*' -delete
 
 run: $(BUILD_DIR)/$(PROJECT_NAME)
 	./$(BUILD_DIR)/$(PROJECT_NAME)

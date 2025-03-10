@@ -25,9 +25,11 @@ done
 
 BASE_DIR=$(dirname $(dirname $(realpath $0)))
 MODELS_DIR="$BASE_DIR/models"
+DATA_DIR="$BASE_DIR/data"
 TOOLS_DIR="$BASE_DIR/tools"
 
 mkdir -p "$MODELS_DIR"
+mkdir -p "$DATA_DIR"
 
 # =============================== COMMON PART ==================================
 
@@ -49,11 +51,11 @@ apt-get update && apt-get install -y \
 # = VOSK =
 # ========
 
-wget https://github.com/alphacep/vosk-api/releases/download/v0.3.45/vosk-linux-armv7l-0.3.45.zip -P "$TOOLS_DIR" && \
-    unzip -o "$TOOLS_DIR/vosk-linux-armv7l-0.3.45.zip" -d "$TOOLS_DIR" && \
-    cp "$TOOLS_DIR/vosk-linux-armv7l-0.3.45/libvosk.so" /lib/ && \
-    cp "$TOOLS_DIR/vosk-linux-armv7l-0.3.45/vosk_api.h" /usr/local/include/ && \
-    rm -rf "$TOOLS_DIR/vosk-linux-armv7l-0.3.45" "$TOOLS_DIR/vosk-linux-armv7l-0.3.45.zip"
+wget https://github.com/alphacep/vosk-api/releases/download/v0.3.45/vosk-linux-aarch64-0.3.45.zip -P "$TOOLS_DIR" && \
+    unzip -o "$TOOLS_DIR/vosk-linux-aarch64-0.3.45.zip" -d "$TOOLS_DIR" && \
+    cp "$TOOLS_DIR/vosk-linux-aarch64-0.3.45/libvosk.so" /lib/ && \
+    cp "$TOOLS_DIR/vosk-linux-aarch64-0.3.45/vosk_api.h" /usr/local/include/ && \
+    rm -rf "$TOOLS_DIR/vosk-linux-aarch64-0.3.45" "$TOOLS_DIR/vosk-linux-aarch64-0.3.45.zip"
 
 wget https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip -P "$MODELS_DIR" && \
     unzip -o "$MODELS_DIR/vosk-model-small-en-us-0.15.zip" -d "$MODELS_DIR" && \
@@ -75,7 +77,6 @@ apt-get update && apt-get install -y \
 
 raspi-config nonint do_spi 0
 raspi-config nonint do_i2c 0
-raspi-config nonint do_i2s 0
 
 # =============
 # = Mic setup =
@@ -98,14 +99,15 @@ echo "dtoverlay=googlevoicehat-soundcard" | tee -a "$BOOT_CONFIG" > /dev/null
 
 curl -fsSL https://ollama.ai/install.sh | sh
 
-ollama pull deepseek
+ollama pull deepseek-r1:1.5b
 ollama serve &
 
 # ===================
 # = Systemd service =
 # ===================
 
-systemctl enable "$TOOLS_DIR/service/piTalkster.service"
+ln -s "$TOOLS_DIR/service/piTalkster.service" /etc/systemd/system/piTalkster.service
+systemctl enable piTalkster
 
 # ======================
 # = Finish with reboot =

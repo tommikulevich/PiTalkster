@@ -1,12 +1,13 @@
 #!/bin/bash
 
-PLATFORM="linux/arm/v7"
+PLATFORM="linux/arm/v8"
 IMAGE_NAME="rpi4b-cross-compile"
-DOCKERFILE_DIR="./tools/cross-compilation"
+TOOLS_DIR="./tools"
+DOCKERFILE="$TOOLS_DIR/cross-compilation/Dockerfile"
 
 build_image() {
     echo "Building Docker image..."
-    docker buildx build --platform $PLATFORM -t $IMAGE_NAME $DOCKERFILE_DIR
+    docker buildx build --platform $PLATFORM -f $DOCKERFILE -t $IMAGE_NAME $TOOLS_DIR
     if [ $? -eq 0 ]; then
         echo "Image built successfully."
     else

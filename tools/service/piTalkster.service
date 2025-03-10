@@ -1,0 +1,14 @@
+[Unit]
+Description=PiTalkster App Service
+
+[Service]
+Restart=always
+RestartSec=5
+StandardOutput=append:/var/log/piTalkster.log
+StandardError=append:/var/log/piTalkster_err.log
+SyslogIdentifier=piTalkster
+WorkingDirectory=/home/pi/Projects/PiTalkster
+ExecStart=/home/pi/Projects/PiTalkster/build/rpi/piTalkster
+
+[Install]
+WantedBy=multi-user.target

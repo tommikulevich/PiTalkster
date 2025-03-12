@@ -23,8 +23,8 @@ TESTS_SRCS := $(shell find $(TESTS_DIR) -type f -name 'test_*.c')
 
 OBJS := $(SRCS:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
 LIB_OBJS := $(LIB_SRCS:$(LIB_DIR)/%.c=$(BUILD_DIR)/$(LIB_DIR)/%.o)
-TESTS_OBJS := $(TESTS_SRCS:$(TESTS_DIR)/%.c=$(BUILD_DIR)/$(TESTS_DIR)/%.o)
 TESTS_REQUIRED_OBJS := $(TESTS_REQUIRED_SRCS:$(SRC_DIR)/%.c=$(BUILD_DIR)/$(TESTS_DIR)/%.o)
+TESTS_BINS := $(TESTS_SRCS:$(TESTS_DIR)/%.c=$(BUILD_DIR)/$(TESTS_DIR)/%)
 
 DEPS := $(OBJS:.o=.d) $(LIB_OBJS:.o=.d) $(TESTS_OBJS:.o=.d)
 
@@ -75,14 +75,16 @@ $(BUILD_DIR)/$(TESTS_DIR)/%.o: $(TESTS_DIR)/%.c
 	@mkdir -p $(@D)
 	@$(CC) $(TESTS_CFLAGS) -MMD -MP -c $< -o $@
 
-$(BUILD_DIR)/test_runner: $(TESTS_OBJS) $(TESTS_REQUIRED_OBJS)
-	@echo "Linking test_runner"
+$(BUILD_DIR)/$(TESTS_DIR)/%: $(BUILD_DIR)/$(TESTS_DIR)/%.o $(TESTS_REQUIRED_OBJS)
+	@echo "Linking test binary: $@"
 	@mkdir -p $(@D)
-	@$(CC) $^ -o $@ $(TESTS_LDFLAGS)
+	@$(CC) $(TESTS_CFLAGS) $^ -o $@ $(TESTS_LDFLAGS)
 
-test: $(BUILD_DIR)/test_runner
-	@echo "Running tests:"
-	@./$(BUILD_DIR)/test_runner
+test: $(TESTS_BINS)
+	@for test in $(TESTS_BINS); do \
+		echo "\nRunning $$test:"; \
+		./$$test || exit 1; \
+	done
 
 run: all
 	@echo "Running $(PROJECT_NAME)"

@@ -45,7 +45,8 @@ apt-get update && apt-get install -y \
     libgpiod-dev \
     libasound2-dev \
     libcjson-dev \
-    libcurl4-openssl-dev
+    libcurl4-openssl-dev \
+    libcmocka-dev
 
 # ========
 # = VOSK =

@@ -91,6 +91,9 @@ typedef enum {
 #define CYAN    "\033[36m"
 #define MAGENTA "\033[35m"
 
+#ifdef UNIT_TESTS
+#define LOG(level, is_endline, ...) ((void)0)
+#else
 #define LOG(level, is_endline, ...) \
     do { \
         if (level <= CURRENT_LOG_LEVEL) { \
@@ -108,6 +111,7 @@ typedef enum {
             if( is_endline ) { fprintf(LOG_STREAM, "\n"); } \
         } \
     } while (0)
+#endif
 
 #define ERROR(...) LOG(LOG_LEVEL_ERROR, true, __VA_ARGS__)
 #define WARN(...)  LOG(LOG_LEVEL_WARN, true, __VA_ARGS__)

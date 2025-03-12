@@ -138,21 +138,27 @@ typedef enum {
 // = Time =
 // ========
 
+#define MS_PER_SEC 1000ULL
+#define US_PER_SEC 1000000ULL
+
 static inline uint64_t get_current_time_us( void ) {
     struct timeval tv;
     gettimeofday(&tv, NULL);
-    return ((uint64_t)tv.tv_sec) * 1000000ULL + (uint64_t)tv.tv_usec;
+    return ((uint64_t)tv.tv_sec) * US_PER_SEC + (uint64_t)tv.tv_usec;
 }
 
 #define DO_WITH_INTERVAL_MS(milliseconds, code) \
     do { \
         static uint64_t last_time = 0; \
         uint64_t current_time = get_current_time_us(); \
-        if ((current_time - last_time) >= (milliseconds * 1000ULL)) { \
+        if ((current_time - last_time) >= (milliseconds * MS_PER_SEC)) { \
             last_time = current_time; \
             code \
         } \
     } while (0)
+
+#define HAS_TIME_PASSED(last_time_us, interval_us) \
+    ((get_current_time_us() - (last_time_us)) >= (interval_us))
 
 #ifdef __cplusplus
 }

@@ -71,7 +71,7 @@ without the need for login via SSH/UART or accessing the SD card.
 
 ### 📟 Getting Started
 
-#### Preparing
+#### 🍵 Preparing
 
 1. **Connect the components** as shown in the HW diagram above. 
 Make sure you meet technical requirements described earlier in this doc.
@@ -85,7 +85,7 @@ to reboot the system.
 4. After rebooting, **the application will start automatically**, and status 
 messages will be shown on the display.
 
-#### Usage
+#### 🫵 Usage
 
 Follow the instructions on the display. In short: 
 - Press `O` to start/stop recording (or to interrupt another processing)
@@ -93,7 +93,7 @@ Follow the instructions on the display. In short:
 
 GIF illustrating the use: **`TODO`**
 
-#### Development
+#### 🪇 Development
 
 To cross-compile the application on a PC follow these steps:
 
@@ -109,7 +109,7 @@ mounted inside the container. You can now **compile the application** by running
 
 ### 📆 Future works
 
-- 🌟 Expanding functionality 
+- 🪄 Expanding functionality 
   - Menu: implement configuration and displaying previous processed prompts 
     with responses
   - LLM|STT: try other models

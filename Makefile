@@ -1,66 +1,96 @@
-include includes_source.mk
+# ===========================
+# === PiTalkster Makefile ===
+# ===========================
 
-PROJECT_NAME = piTalkster
+include mk/includes_src.mk
+include mk/includes_lib.mk
+include mk/includes_tests.mk
+
+PROJECT_NAME := piTalkster
 
 TARGET ?= rpi
-BUILD_DIR = build/$(TARGET)
-SRC_DIR = src
-EXT_LIB_DIR = lib
 
-CC = gcc
+BUILD_DIR := build/$(TARGET)
+SRC_DIR := src
+TESTS_DIR := tests
+LIB_DIR := lib
 
-CFLAGS = -std=c17 \
-		 -Wall -Wextra -Werror -Wpedantic -Wconversion -Wshadow \
-         -Wformat=2 -Wstrict-aliasing=2 -Wnull-dereference -Wstack-usage=6144 \
-         -D_FORTIFY_SOURCE=2 -fstack-protector-strong \
-         -O2 -g3 -DRPI_TARGET -D_DEFAULT_SOURCE -D_GNU_SOURCE \
-         -I$(SRC_DIR) -I$(EXT_LIB_DIR) $(CFLAGS_EXTRA) $(EXT_LIB_CFLAGS_EXTRA)
-EXT_LIB_CFLAGS = -std=c17 \
-		 -O2 -g3 -D_DEFAULT_SOURCE -D_GNU_SOURCE \
-		 -I$(EXT_LIB_DIR) $(EXT_LIB_CFLAGS_EXTRA)
-LDFLAGS = -lm $(LDFLAGS_EXTRA) 
+CC := gcc
 
-SRCS = $(shell find $(SRC_DIR) -name '*.c' ! -name '*_test.c')
-LIB_SRCS = $(shell find $(EXT_LIB_DIR) -name '*.c')
+SRCS := $(shell find $(SRC_DIR) -type f -name '*.c')
+LIB_SRCS := $(shell find $(LIB_DIR) -type f -name '*.c')
+TESTS_SRCS := $(shell find $(TESTS_DIR) -type f -name 'test_*.c')
 
-OBJS = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRCS))
-LIB_OBJS = $(patsubst $(EXT_LIB_DIR)/%.c,$(BUILD_DIR)/lib/%.o,$(LIB_SRCS))
+OBJS := $(SRCS:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
+LIB_OBJS := $(LIB_SRCS:$(LIB_DIR)/%.c=$(BUILD_DIR)/$(LIB_DIR)/%.o)
+TESTS_OBJS := $(TESTS_SRCS:$(TESTS_DIR)/%.c=$(BUILD_DIR)/$(TESTS_DIR)/%.o)
+TESTS_REQUIRED_OBJS := $(TESTS_REQUIRED_SRCS:$(SRC_DIR)/%.c=$(BUILD_DIR)/$(TESTS_DIR)/%.o)
 
-DEPS = $(OBJS:.o=.d) $(LIB_OBJS:.o=.d)
+DEPS := $(OBJS:.o=.d) $(LIB_OBJS:.o=.d) $(TESTS_OBJS:.o=.d)
+
+-include $(DEPS)
+
+CFLAGS := -std=c17 -Wall -Wextra -Werror -Wpedantic -Wconversion -Wshadow \
+	-Wformat=2 -Wstrict-aliasing=2 -Wnull-dereference -Wstack-usage=6144 \
+	-D_FORTIFY_SOURCE=2 -fstack-protector-strong -O2 -g3 \
+	-D_DEFAULT_SOURCE -D_GNU_SOURCE \
+	-I$(SRC_DIR) $(CFLAGS_EXTRA) -I$(LIB_DIR) $(LIB_CFLAGS_EXTRA)
+LIB_CFLAGS = -std=c17 \
+	-O2 -g3 -D_DEFAULT_SOURCE -D_GNU_SOURCE \
+	-I$(LIB_DIR) $(LIB_CFLAGS_EXTRA)
+TESTS_CFLAGS := -std=c17 -Wall -Wextra -Werror -Wpedantic -Wshadow \
+	-Wformat=2 -Wnull-dereference -O0 -g3 --coverage -DUNIT_TESTS \
+	-I$(TESTS_DIR) $(TESTS_CFLAGS_EXTRA)
+
+LDFLAGS := $(LDFLAGS_EXTRA) $(LIB_LDFLAGS_EXTRA)
+TESTS_LDFLAGS := $(TESTS_LDFLAGS_EXTRA) 
 
 .PHONY: all clean test run
 
 all: $(BUILD_DIR)/$(PROJECT_NAME)
 
 $(BUILD_DIR)/$(PROJECT_NAME): $(OBJS) $(LIB_OBJS)
-	@echo "Building $(PROJECT_NAME)."
+	@echo "Linking $(PROJECT_NAME)"
 	@mkdir -p $(@D)
 	@$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
-	@echo "All is done."
+	@echo "Build complete."
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	@echo "Compiling $<"
 	@mkdir -p $(@D)
 	@$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
 
-$(BUILD_DIR)/lib/%.o: $(EXT_LIB_DIR)/%.c
-	@echo "Compiling external library $<"
+$(BUILD_DIR)/$(LIB_DIR)/%.o: $(LIB_DIR)/%.c
+	@echo "Compiling external library: $<"
 	@mkdir -p $(@D)
-	@$(CC) $(EXT_LIB_CFLAGS) -MMD -MP -c $< -o $@
+	@$(CC) $(LIB_CFLAGS) -MMD -MP -c $< -o $@ 
 
--include $(DEPS)
+$(BUILD_DIR)/$(TESTS_DIR)/%.o: $(SRC_DIR)/%.c
+	@echo "Compiling (for tests) $<"
+	@mkdir -p $(@D)
+	@$(CC) $(TESTS_CFLAGS) -MMD -MP -c $< -o $@
 
-test: CFLAGS += --coverage -O0
-test: LDFLAGS += -lcmocka -lgcov
-test:
-	$(MAKE) -C tests TARGET=$(TARGET)
+$(BUILD_DIR)/$(TESTS_DIR)/%.o: $(TESTS_DIR)/%.c
+	@echo "Compiling test: $<"
+	@mkdir -p $(@D)
+	@$(CC) $(TESTS_CFLAGS) -MMD -MP -c $< -o $@
+
+$(BUILD_DIR)/test_runner: $(TESTS_OBJS) $(TESTS_REQUIRED_OBJS)
+	@echo "Linking test_runner"
+	@mkdir -p $(@D)
+	@$(CC) $^ -o $@ $(TESTS_LDFLAGS)
+
+test: $(BUILD_DIR)/test_runner
+	@echo "Running tests:"
+	@./$(BUILD_DIR)/test_runner
+
+run: all
+	@echo "Running $(PROJECT_NAME)"
+	@./$(BUILD_DIR)/$(PROJECT_NAME)
 
 clean:
-	@echo "Cleaning."
 	@rm -rf $(BUILD_DIR)
-	@find . -name '*.gc*' -delete
-
-run: $(BUILD_DIR)/$(PROJECT_NAME)
-	@echo "Running."
-	@./$(BUILD_DIR)/$(PROJECT_NAME)
-	
+	@find . -type f -name '*.gcda' -delete
+	@find . -type f -name '*.gcno' -delete
+	@find . -type f -name '*.gcov' -delete
+	@echo "Clean complete."

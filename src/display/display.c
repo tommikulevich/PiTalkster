@@ -40,9 +40,7 @@ static result_t wrap_write( display_menu_t * m, const char * text, uint32_t colo
 
     while( *p ) {
         if( m->curr_y >= DISP_HEIGHT - LINE_HEIGHT ) {
-            RETURN_ON_ERROR( display_hw_clear() );
-            m->curr_x = 0;
-            m->curr_y = 0;
+            RETURN_ON_ERROR( display_menu_clear(m));
         }
 
         if( *p == '\n' || m->curr_x >= DISP_WIDTH ) {
@@ -106,7 +104,7 @@ result_t display_menu_new_line( display_menu_t * m ) {
 }
 
 result_t display_menu_update_line( display_menu_t * m, const char * text, 
-        uint32_t color) {
+        uint32_t color ) {
     RETURN_IF_NULL(m);
     RETURN_IF_NULL(text);
 
@@ -117,10 +115,25 @@ result_t display_menu_update_line( display_menu_t * m, const char * text,
 }
 
 result_t display_menu_append_text( display_menu_t * m, const char * text, 
-        uint32_t color) {
+        uint32_t color ) {
     RETURN_IF_NULL(m);
     RETURN_IF_NULL(text);        
     return wrap_write(m, text, color);
+}
+
+result_t display_menu_clear( display_menu_t * m ) {
+    RETURN_IF_NULL(m);  
+
+    RETURN_ON_ERROR( display_hw_clear() );
+    m->curr_x = 0;
+    m->curr_y = 0;
+
+    return RES_OK;
+}
+
+bool is_display_menu_almost_full( display_menu_t * m ) {
+    // TODO: make this more universal (why 4 lines)
+    return m->curr_y >= DISP_HEIGHT - 4 * LINE_HEIGHT;
 }
 
 result_t display_init( void ) {

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PLATFORM="linux/arm/v8"
+PLATFORM="linux/arm64"
 IMAGE_NAME="rpi4b-cross-compile"
 TOOLS_DIR="./tools"
 DOCKERFILE="$TOOLS_DIR/cross-compilation/Dockerfile"

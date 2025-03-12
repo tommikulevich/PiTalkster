@@ -8,8 +8,3 @@ CFLAGS_EXTRA = \
 	-Isrc/audio_input \
 	-Isrc/speech_to_text \
 	-Isrc/llm
-
-EXT_LIB_CFLAGS_EXTRA = \
-	-Ilib/st7789 \
-	-Ilib/st7789/interface \
-	-Ilib/st7789/interface/inc

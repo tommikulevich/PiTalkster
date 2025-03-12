@@ -130,7 +130,7 @@ result_t ollama_ask_deepseek_model(
         return RES_ERR_GENERIC;
     }
 
-    FILE * output_file = fopen(answer_filepath, "w");
+    FILE * output_file = fopen(answer_filepath, "a+");
     if( !output_file ) {
         free(post_data);
         curl_easy_cleanup(curl);

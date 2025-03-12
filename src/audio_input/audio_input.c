@@ -181,7 +181,7 @@ void * audio_input_thread( void * arg UNUSED_PARAM ) {
             }
 
             case REC_STATUS_FINISHED_ERROR: {
-                const char * error_msg = "Error: Recording failed.\n";
+                const char * error_msg = "\nError: Recording failed.\n";
                 rec_status_event_publish(error_msg, 
                     strlen(error_msg));
                 rec_context_clear(&context);

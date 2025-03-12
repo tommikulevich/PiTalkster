@@ -77,6 +77,108 @@ static void update_last_time_pressed( uint64_t * last_time_pressed ) {
     *last_time_pressed = get_current_time_us();
 }
 
+// === DISPLAY ANSWER ===
+
+static void answer_context_reinit( answer_context_t * context ) {
+    if( context->last_answer_file ) {
+        fclose(context->last_answer_file);
+    }
+    context->page_pos = 0;
+    memset(context->page_pos_history, 0, sizeof(context->page_pos_history));
+    context->page_pos_history_idx = -1;
+}
+
+static result_t answer_read_char( answer_context_t * context, char * ch ) {
+    fseek(context->last_answer_file, context->page_pos, SEEK_SET);  
+    int result = fgetc(context->last_answer_file); 
+    if( result != EOF ) {
+        *ch = (char)result;
+        context->page_pos = ftell(context->last_answer_file); 
+        return RES_OK; 
+    }
+    return RES_ERR_GENERIC;
+}
+
+static result_t answer_read_word( answer_context_t * context, char * word, 
+        int max_len ) {
+    int i = 0;
+    char ch;
+
+    while( i < max_len - 1 ) {
+        if( answer_read_char(context, &ch) != RES_OK ) {
+            context->page_pos = EOF_POS;
+            break;  
+        }
+
+        if( ch == ' ' || ch == '\n' ) {
+            if( i > 0 ) {  
+                word[i++] = ch;
+                word[i] = '\0';
+                return RES_OK;
+            }
+            word[i++] = ch;
+            word[i] = '\0';
+            return RES_OK;
+        }
+
+        word[i++] = ch; 
+    }
+
+    if( i > 0 ) {
+        word[i] = '\0';
+        return RES_OK;
+    }
+
+    return RES_ERR_GENERIC;
+}
+
+static result_t answer_open_file( answer_context_t * context, char * path ) {
+    context->last_answer_file = fopen(path, "r");
+    RETURN_IF_NULL(context->last_answer_file);
+    return RES_OK;
+}
+
+static void scroll_forward_last_answer( core_context_t * context ) {
+    if( context->ans.page_pos == EOF_POS ) {
+        context->ans.page_pos = 0;
+        context->ans.page_pos_history_idx = 0;
+    }
+    
+    if( context->ans.page_pos_history_idx < (int)(NELEMS(context->ans.page_pos_history) - 1) ) {
+        context->ans.page_pos_history_idx++;
+        context->ans.page_pos_history[context->ans.page_pos_history_idx] = context->ans.page_pos;
+    }
+
+    display_menu_clear(&context->menu);
+
+    char word[32];
+    while( !is_display_menu_almost_full(&context->menu) ) {
+        if( answer_read_word(&context->ans, word, NELEMS(word)) != RES_OK ) {
+            break;
+        }
+
+        display_menu_append_text(&context->menu, word, COLOR_FULL_OUTPUT);
+    }
+}
+
+static void scroll_backward_last_answer( core_context_t * context ) {
+    if( context->ans.page_pos_history_idx > 0 ) {
+        context->ans.page_pos_history_idx--;
+        context->ans.page_pos = context->ans.page_pos_history[context->ans.page_pos_history_idx];
+
+        display_menu_clear(&context->menu);
+
+        char word[32];
+        while( !is_display_menu_almost_full(&context->menu) ) {
+            if( answer_read_word(&context->ans, word, NELEMS(word)) != RES_OK ) {
+                break;
+            } 
+            
+            display_menu_append_text(&context->menu, word, COLOR_FULL_OUTPUT);
+        }
+    }
+}
+
 // === EVENTS ===
 
 static void rec_request_event_publish( void ) {    
@@ -197,108 +299,6 @@ static void action_based_on_button( core_context_t * context,
 
         default: 
             break;
-    }
-}
-
-// === DISPLAY ANSWER ===
-
-static void answer_context_reinit( answer_context_t * context ) {
-    if( context->last_answer_file ) {
-        fclose(context->last_answer_file);
-    }
-    context->page_pos = 0;
-    memset(context->page_pos_history, 0, sizeof(context->page_pos_history));
-    context->page_pos_history_idx = -1;
-}
-
-static result_t answer_read_char( answer_context_t * context, char * ch ) {
-    fseek(context->last_answer_file, context->page_pos, SEEK_SET);  
-    int result = fgetc(context->last_answer_file); 
-    if( result != EOF ) {
-        *ch = (char)result;
-        context->page_pos = ftell(context->last_answer_file); 
-        return RES_OK; 
-    }
-    return RES_ERR_GENERIC;
-}
-
-static result_t answer_read_word( answer_context_t * context, char * word, 
-        int max_len ) {
-    int i = 0;
-    char ch;
-
-    while( i < max_len - 1 ) {
-        if( answer_read_char(context, &ch) != RES_OK ) {
-            context->page_pos = EOF_POS;
-            break;  
-        }
-
-        if( ch == ' ' || ch == '\n' ) {
-            if( i > 0 ) {  
-                word[i++] = ch;
-                word[i] = '\0';
-                return RES_OK;
-            }
-            word[i++] = ch;
-            word[i] = '\0';
-            return RES_OK;
-        }
-
-        word[i++] = ch; 
-    }
-
-    if( i > 0 ) {
-        word[i] = '\0';
-        return RES_OK;
-    }
-
-    return RES_ERR_GENERIC;
-}
-
-static result_t answer_open_file( answer_context_t * context, char * path ) {
-    context->last_answer_file = fopen(path, "r");
-    RETURN_IF_NULL(context->last_answer_file);
-    return RES_OK;
-}
-
-static void scroll_forward_last_answer( core_context_t * context ) {
-    if( context->ans.page_pos == EOF_POS ) {
-        context->ans.page_pos = 0;
-        context->ans.page_pos_history_idx = 0;
-    }
-    
-    if( context->ans.page_pos_history_idx < (int)(NELEMS(context->ans.page_pos_history) - 1) ) {
-        context->ans.page_pos_history_idx++;
-        context->ans.page_pos_history[context->ans.page_pos_history_idx] = context->ans.page_pos;
-    }
-
-    display_menu_clear(&context->menu);
-
-    char word[32];
-    while( !is_display_menu_almost_full(&context->menu) ) {
-        if( answer_read_word(&context->ans, word, NELEMS(word)) != RES_OK ) {
-            break;
-        }
-
-        display_menu_append_text(&context->menu, word, COLOR_FULL_OUTPUT);
-    }
-}
-
-static void scroll_backward_last_answer( core_context_t * context ) {
-    if( context->ans.page_pos_history_idx > 0 ) {
-        context->ans.page_pos_history_idx--;
-        context->ans.page_pos = context->ans.page_pos_history[context->ans.page_pos_history_idx];
-
-        display_menu_clear(&context->menu);
-
-        char word[32];
-        while( !is_display_menu_almost_full(&context->menu) ) {
-            if( answer_read_word(&context->ans, word, NELEMS(word)) != RES_OK ) {
-                break;
-            } 
-            
-            display_menu_append_text(&context->menu, word, COLOR_FULL_OUTPUT);
-        }
     }
 }
 

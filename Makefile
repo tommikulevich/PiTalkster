@@ -61,5 +61,6 @@ clean:
 	@find . -name '*.gc*' -delete
 
 run: $(BUILD_DIR)/$(PROJECT_NAME)
-	./$(BUILD_DIR)/$(PROJECT_NAME)
+	@echo "Running."
+	@./$(BUILD_DIR)/$(PROJECT_NAME)
 	

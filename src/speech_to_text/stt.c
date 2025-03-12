@@ -127,6 +127,19 @@ static void stt_status_event_publish( const char * status_msg,
     }
 }
 
+static void pipeline_failed_event_publish( void ) {    
+    event_t event = STRUCT_INIT_ALL_ZEROS;
+    result_t res = event_create(
+        COMPONENT_STT, COMPONENT_CORE_DISP,
+        EVENT_PIPELINE_DONE, 
+        NULL, 0,
+        &event);
+
+    if( res == RES_OK ) {
+        broker_publish(&event);
+    }
+}
+
 static void stt_context_clear( stt_context_t * context ) {
     memset(context->wav_filepath, 0, sizeof(context->wav_filepath));
     memset(context->txt_filepath, 0, sizeof(context->txt_filepath));
@@ -178,9 +191,10 @@ void * stt_thread( void * arg UNUSED_PARAM ) {
             }
 
             case STT_STATUS_FINISHED_ERROR: {
-                const char * error_msg = "Error: STT failed.\n";
+                const char * error_msg = "\nError: STT failed.\n";
                 stt_status_event_publish(error_msg, 
                     strlen(error_msg));
+                pipeline_failed_event_publish();
                 stt_context_clear(&context);
                 break;
             }

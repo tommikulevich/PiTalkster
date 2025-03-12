@@ -86,6 +86,29 @@ static result_t create_answer_filepath_from_prompt_filepath(
     return RES_OK;
 }
 
+result_t copy_prompt_to_answer_file( const char * prompt_filepath, 
+        const char * answer_filepath ) {
+    FILE * src_file = fopen(prompt_filepath, "r");
+    FILE * dst_file = fopen(answer_filepath, "w");
+
+    RETURN_IF_NULL(src_file);
+    RETURN_IF_NULL(dst_file);
+
+    fprintf(dst_file, "=== PROMPT ===\n\n");
+
+    int ch;
+    while( (ch = fgetc(src_file)) != EOF ) {
+        fputc(ch, dst_file);
+    }
+
+    fprintf(dst_file, "\n=== ANSWER ===\n\n");
+
+    fclose(src_file);
+    fclose(dst_file);
+
+    return RES_OK;
+}
+
 static void * llm_operation_thread( void * arg ) {
     llm_context_t * params = (llm_context_t *)arg;
 
@@ -105,6 +128,19 @@ static void pipeline_done_event_publish( char * answer_filepath,
         COMPONENT_LLM, COMPONENT_CORE_DISP,
         EVENT_PIPELINE_DONE, 
         answer_filepath, answer_filepath_size,
+        &event);
+
+    if( res == RES_OK ) {
+        broker_publish(&event);
+    }
+}
+
+static void pipeline_failed_event_publish( void ) {    
+    event_t event = STRUCT_INIT_ALL_ZEROS;
+    result_t res = event_create(
+        COMPONENT_LLM, COMPONENT_CORE_DISP,
+        EVENT_PIPELINE_DONE, 
+        NULL, 0,
         &event);
 
     if( res == RES_OK ) {
@@ -180,9 +216,10 @@ void * llm_thread( void * arg UNUSED_PARAM ) {
             }
 
             case LLM_STATUS_FINISHED_ERROR: {
-                const char * error_msg = "Error: LLM failed.\n";
+                const char * error_msg = "\nError: LLM failed.\n";
                 llm_status_event_publish(error_msg, 
                     strlen(error_msg));
+                pipeline_failed_event_publish();
                 llm_context_clear(&context);
                 break;
             }
@@ -224,6 +261,9 @@ void * llm_thread( void * arg UNUSED_PARAM ) {
                             strlen(error_msg));
                         continue;
                     }
+
+                    copy_prompt_to_answer_file(context.prompt_filepath,
+                        context.answer_filepath);
 
                     const char * msg = "LLM start.\n";
                     llm_status_event_publish(msg, strlen(msg));

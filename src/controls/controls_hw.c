@@ -25,7 +25,7 @@
  * PRIVATE MACROS AND DEFINES *
  ******************************/
 
-#define DEBOUNCE_TIME_US    2000
+#define DEBOUNCE_TIME_US    20000
 #define GPIO_CHIP_PATH      "/dev/gpiochip0"
 
 /********************

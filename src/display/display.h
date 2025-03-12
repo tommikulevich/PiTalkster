@@ -22,9 +22,12 @@ extern "C" {
  * MACROS AND DEFINES *
  **********************/
 
-#define COLOR_STATUS    0x00CE79
-#define COLOR_PROMPT    0x004FF4
-#define COLOR_ANSWER    0x004E5F
+#define COLOR_TIP               0x004FE0
+#define COLOR_STATUS            0x00CE79
+#define COLOR_PARTIAL_ANSWER    0x004E5F
+#define COLOR_FULL_OUTPUT       0x00C81F
+
+#define DEFAULT_DISPLAY_MENU    STRUCT_INIT_ALL_ZEROS
 
 /************
  * TYPEDEFS *
@@ -44,6 +47,8 @@ extern result_t display_menu_update_line( display_menu_t * m, const char * text,
     uint32_t color );
 extern result_t display_menu_append_text( display_menu_t * m, const char * text, 
     uint32_t color );
+extern result_t display_menu_clear( display_menu_t * m );
+extern bool is_display_menu_almost_full( display_menu_t * m );
 
 extern result_t display_init( void );
 

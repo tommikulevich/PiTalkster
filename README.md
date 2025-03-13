@@ -71,39 +71,50 @@ without the need for login via SSH/UART or accessing the SD card.
 
 ### 📟 Getting Started
 
-#### 🍵 Preparing
+#### 🍵 Quick Start
 
-1. **Connect the components** as shown in the HW diagram above. 
-Make sure you meet technical requirements described earlier in this doc.
-2. **Clone the repository** into `/home/pi/Projects`. If you choose a different 
-directory, make sure to update the paths in the service file located 
-at `tools/service/piTalkster.service`.
-3. **Run** `sudo ./tools/first_use_prepare.sh` to install 
-necessary libraries and models. Note that an active internet connection is 
-required for this step. Once the script completes, you will be prompted 
-to reboot the system. 
-4. After rebooting, **the application will start automatically**, and status 
-messages will be shown on the display.
+1. **Connect components** as per the HW diagram.
+2. **Clone the repository**.
+3. **Run the installation script**:
+
+```bash
+sudo ./tools/first_use_prepare.sh
+```
+
+*Note that an active internet connection is required for this step.* 
+*Once the script completes, you will be prompted to reboot the system.*
+
+4. After reboot, the app will **start automatically** and display status messages.
 
 #### 🫵 Usage
 
 Follow the instructions on the display. In short: 
-- Press `O` to start/stop recording (or to interrupt another processing)
-- Press `<` and `>` to scroll prompt and answer
+- Press `O` to **start/stop recording** (or to *interrupt another processing*)
+- Press `<` and `>` to **scroll prompt and answer**
 
-GIF illustrating the use: **`TODO`**
+GIF illustrating the use: **`... comming soon ...`**
 
 #### 🪇 Development
 
 To cross-compile the application on a PC follow these steps:
 
-1. **Run** `./tools/cross-compilation/build_and_run_container.sh brun`. 
-The `brun` argument will build the Docker container and start it. 
-Alternatively, you can use `build` to only build the container, or `run` to only 
-start it if it has already been built.
-2. Once the container is running, the project folder will be automatically 
-mounted inside the container. You can now **compile the application** by running
-`make -j`.
+1. **Run the script**:
+
+```bash
+./tools/cross-compilation/build_and_run_container.sh
+```
+
+- `brun` - build and start the Docker container
+- `build` - only build the container
+- `run` - only start the container (if already built)
+
+*The project folder is automatically mounted inside the container.*
+
+2. **Compile the application**:
+
+```bash
+TARGET="rpi" make -j4
+```
 
 ---
 

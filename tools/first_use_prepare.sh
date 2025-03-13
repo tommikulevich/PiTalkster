@@ -107,8 +107,17 @@ ollama serve &
 # = Systemd service =
 # ===================
 
-ln -s "$TOOLS_DIR/service/piTalkster.service" /etc/systemd/system/piTalkster.service
+ln -sf "$TOOLS_DIR/start.sh" /usr/local/bin/piTalkster_start
+
+ln -sf "$TOOLS_DIR/service/piTalkster.service" /etc/systemd/system/piTalkster.service
 systemctl enable piTalkster
+
+# ================
+# = Building app =
+# ================
+
+make clean
+TARGET="rpi" make -j4
 
 # ======================
 # = Finish with reboot =

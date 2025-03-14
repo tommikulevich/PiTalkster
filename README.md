@@ -14,7 +14,7 @@
 > with HW, e.g. LCD and microphone) ~~preferably also using TDD~~. 
 > Time will tell if this works out!_
 
-![Status](https://img.shields.io/badge/Project_status-Completion_of_README-blue)
+![Status](https://img.shields.io/badge/Project_status-Demo_prepared!-blue)
 
 ---
 
@@ -89,10 +89,12 @@ sudo ./tools/first_use_prepare.sh
 #### 🫵 Usage
 
 Follow the instructions on the display. In short: 
-- Press `O` to **start/stop recording** (or to *interrupt another processing*)
-- Press `<` and `>` to **scroll prompt and answer**
+- Press `O` (*SW2*) to **start/stop recording** (or to *interrupt another processing*)
+- Press `<` (*SW3*) and `>` (*SW1*) to **scroll prompt and answer**
 
-GIF illustrating the use: **`... comming soon ...`**
+**DEMO**:
+
+https://github.com/user-attachments/assets/431a1515-4794-44e1-9f1a-9ec3e95144d6
 
 #### 🪇 Development
 

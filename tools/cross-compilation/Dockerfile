@@ -4,10 +4,10 @@
 
 FROM debian:bookworm
 
-COPY first_use_prepare.sh /usr/local/bin/first_use_prepare.sh
+COPY initial_setup.sh /usr/local/bin/initial_setup.sh
 
-RUN chmod +x /usr/local/bin/first_use_prepare.sh
+RUN chmod +x /usr/local/bin/initial_setup.sh
 
-RUN ./usr/local/bin/first_use_prepare.sh -i
+RUN ./usr/local/bin/initial_setup.sh -i
 
 WORKDIR /app

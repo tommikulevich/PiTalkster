@@ -78,7 +78,7 @@ without the need for login via SSH/UART or accessing the SD card.
 3. **Run the installation script**:
 
 ```bash
-sudo ./tools/first_use_prepare.sh
+sudo ./tools/initial_setup.sh
 ```
 
 *Note that an active internet connection is required for this step.* 
@@ -103,7 +103,7 @@ To cross-compile the application on a PC follow these steps:
 1. **Run the script**:
 
 ```bash
-./tools/cross-compilation/build_and_run_container.sh
+./tools/cross-compilation/cross_container.sh brun
 ```
 
 - `brun` - build and start the Docker container
@@ -115,7 +115,7 @@ To cross-compile the application on a PC follow these steps:
 2. **Compile the application**:
 
 ```bash
-TARGET="rpi" make -j4
+TARGET="rpi" make -j
 ```
 
 ---
